@@ -1,28 +1,53 @@
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
+import { Separator } from "@/components/ui/separator";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument-sans",
+  subsets: ["latin"],
+});
+
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   title: "Jev Search",
-  description: "Ask a yes/no, pick-one or rating question and get Jev's answer.",
+  description: "Ask a yes/no, pick-one or rating question and see how sure Jev is.",
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfbfe" },
+    { media: "(prefers-color-scheme: dark)", color: "#121019" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${instrumentSans.variable} ${bricolage.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col font-sans">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+        >
+          Skip to content
+        </a>
         {children}
-        <footer className="border-t border-line px-4 py-3 text-center text-xs text-muted">
-          Answers by Jev, a{" "}
-          <a href="https://typesafe.ai" className="hover:underline">
-            TypeSafe
-          </a>{" "}
-          System One model.
+        <footer className="flex flex-col">
+          <Separator />
+          <p className="px-4 py-4 text-center text-xs text-muted-foreground">
+            Answers by Jev, a System One model from{" "}
+            <a href="https://typesafe.ai" className="underline-offset-4 hover:underline">
+              TypeSafe
+            </a>
+          </p>
         </footer>
       </body>
     </html>

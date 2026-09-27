@@ -1,7 +1,8 @@
 # Jev Search
 
 A search page that answers questions with [Jev](https://typesafe.ai), TypeSafe's
-System One model. Built with Next.js (App Router) and TypeScript, deployed on Vercel.
+System One model. Built with Next.js (App Router), TypeScript, Tailwind CSS and
+[shadcn/ui](https://ui.shadcn.com), deployed on Vercel.
 
 Jev answers three kinds of question:
 

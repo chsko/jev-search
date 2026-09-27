@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { APIError, TypeSafeError } from "@typesafe-ai/sdk";
+import { AlertCircleIcon } from "lucide-react";
 import { Answer } from "@/components/Answer";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getJevClient } from "@/lib/client";
 import { askJev, MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
 
@@ -46,13 +48,20 @@ export default async function SearchPage({ searchParams }: Props) {
     console.error("Jev request failed", error);
     return <ErrorCard message={describeError(error)} />;
   }
-  return <Answer outcome={outcome} />;
+  return (
+    <>
+      <h1 className="sr-only">Jev’s answer to “{q}”</h1>
+      <Answer outcome={outcome} />
+    </>
+  );
 }
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <p role="alert" className="rounded-2xl border border-line bg-surface p-6 text-base">
-      {message}
-    </p>
+    <Alert variant="destructive">
+      <AlertCircleIcon />
+      <AlertTitle>No answer this time</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   );
 }

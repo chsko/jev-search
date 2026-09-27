@@ -1,0 +1,52 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { Bar, BarChart, XAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+
+const config = {
+  probability: { label: "Probability", color: "var(--chart-1)" },
+} satisfies ChartConfig;
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(REDUCED_MOTION);
+      query.addEventListener("change", onChange);
+      return () => query.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => true,
+  );
+}
+
+export function RatingChart({
+  distribution,
+}: {
+  distribution: { value: number; probability: number }[];
+}) {
+  const reducedMotion = usePrefersReducedMotion();
+  const data = distribution.map((d) => ({
+    rating: String(d.value),
+    probability: Math.round(d.probability * 100),
+  }));
+  return (
+    <ChartContainer config={config} className="aspect-auto h-40 w-full">
+      <BarChart data={data} accessibilityLayer margin={{ top: 4, left: 0, right: 0, bottom: 0 }}>
+        <XAxis dataKey="rating" tickLine={false} axisLine={false} tickMargin={8} />
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent hideIndicator formatter={(v) => `${v}% likely`} />}
+        />
+        <Bar dataKey="probability" fill="var(--color-probability)" radius={6} isAnimationActive={!reducedMotion} />
+      </BarChart>
+    </ChartContainer>
+  );
+}
