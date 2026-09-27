@@ -32,15 +32,15 @@ second round trip at the cost of a few extra tokens per search.
 
 ```sh
 cp .env.example .env.local   # add TYPESAFE_API_KEY
-npm install
-npm run dev                  # http://localhost:3000
-npm test                     # unit tests (Jev is faked)
-npm run lint && npm run typecheck
+pnpm install
+pnpm dev                      # http://localhost:3000
+pnpm test                     # unit tests (Jev is faked)
+pnpm lint && pnpm typecheck
 ```
 
 ## Deploying to Vercel
 
-1. Import this repository in Vercel (framework preset: Next.js, no other settings needed).
+1. Import this repository in Vercel (framework preset: Next.js; Vercel detects pnpm from `pnpm-lock.yaml` and `packageManager`).
 2. Add `TYPESAFE_API_KEY` under **Settings → Environment Variables** (optionally `TYPESAFE_DEFAULT_MODEL`).
 3. Deploy. Every search calls the TypeSafe API with your key, so consider
    Vercel's firewall rate limiting before sharing the URL widely.

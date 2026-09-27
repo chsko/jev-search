@@ -11,4 +11,4 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
 
 ## Commands
 
-- `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`
+Use pnpm (never npm or yarn): `pnpm install`, `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`
