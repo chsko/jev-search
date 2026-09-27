@@ -1,0 +1,58 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { APIError, TypeSafeError } from "@typesafe-ai/sdk";
+import { Answer } from "@/components/Answer";
+import { getJevClient } from "@/lib/client";
+import { askJev, MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
+
+type Props = PageProps<"/search">;
+
+async function readQuery(searchParams: Props["searchParams"]) {
+  const q = (await searchParams).q;
+  return (Array.isArray(q) ? q[0] : q)?.trim() ?? "";
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const q = await readQuery(searchParams);
+  return { title: q ? `${q} – Jev Search` : "Jev Search" };
+}
+
+function describeError(error: unknown): string {
+  if (error instanceof APIError) {
+    if (error.status === 401 || error.status === 403) {
+      return "Jev Search isn’t authorised to call Jev. Check the TYPESAFE_API_KEY setting.";
+    }
+    if (error.status === 429) return "Jev is busy right now. Please try again in a moment.";
+    return "Jev couldn’t answer right now. Please try again.";
+  }
+  if (error instanceof TypeSafeError && /api key/i.test(error.message)) {
+    return "Jev Search isn’t configured yet: set TYPESAFE_API_KEY on the server.";
+  }
+  return "Jev couldn’t be reached. Please try again.";
+}
+
+export default async function SearchPage({ searchParams }: Props) {
+  const q = await readQuery(searchParams);
+  if (!q) redirect("/");
+
+  if (q.length > MAX_QUERY_LENGTH) {
+    return <ErrorCard message={`Please keep questions under ${MAX_QUERY_LENGTH} characters.`} />;
+  }
+
+  let outcome: Outcome;
+  try {
+    outcome = await askJev(getJevClient(), q);
+  } catch (error) {
+    console.error("Jev request failed", error);
+    return <ErrorCard message={describeError(error)} />;
+  }
+  return <Answer outcome={outcome} />;
+}
+
+function ErrorCard({ message }: { message: string }) {
+  return (
+    <p role="alert" className="rounded-2xl border border-line bg-surface p-6 text-base">
+      {message}
+    </p>
+  );
+}

@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1f1f1f;
+  --surface: #ffffff;
+  --line: #dadce0;
+  --track: #eceff1;
+  --muted: #5f6368;
+  --link: #1a0dab;
+  --brand-blue: #4285f4;
+  --brand-red: #ea4335;
+  --brand-yellow: #fbbc05;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1f1f1f;
+    --foreground: #e8eaed;
+    --surface: #28292c;
+    --line: #3c4043;
+    --track: #3c4043;
+    --muted: #9aa0a6;
+    --link: #8ab4f8;
+    --brand-blue: #8ab4f8;
+    --brand-red: #f28b82;
+    --brand-yellow: #fdd663;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-track: var(--track);
+  --color-muted: var(--muted);
+  --color-link: var(--link);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-red: var(--brand-red);
+  --color-brand-yellow: var(--brand-yellow);
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  cursor: pointer;
+}
