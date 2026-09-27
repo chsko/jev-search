@@ -30,17 +30,17 @@ function usePrefersReducedMotion() {
 export function RatingChart({
   distribution,
 }: {
-  distribution: { value: number; probability: number }[];
+  distribution: { label: string; probability: number }[];
 }) {
   const reducedMotion = usePrefersReducedMotion();
   const data = distribution.map((d) => ({
-    rating: String(d.value),
+    level: d.label,
     probability: Math.round(d.probability * 100),
   }));
   return (
     <ChartContainer config={config} className="aspect-auto h-40 w-full">
       <BarChart data={data} accessibilityLayer margin={{ top: 4, left: 0, right: 0, bottom: 0 }}>
-        <XAxis dataKey="rating" tickLine={false} axisLine={false} tickMargin={8} />
+        <XAxis dataKey="level" tickLine={false} axisLine={false} tickMargin={8} />
         <ChartTooltip
           cursor={false}
           content={<ChartTooltipContent hideIndicator formatter={(v) => `${v}% likely`} />}

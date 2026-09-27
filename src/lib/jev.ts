@@ -4,11 +4,9 @@ import {
   noul,
   score,
   type ChoiceResponse,
-  type EntryType,
   type Question,
   type Questions,
   type ResultFor,
-  type ScoreCriteria,
   type SystemOneRequest,
   type SystemOneResult,
 } from "@typesafe-ai/sdk";
@@ -34,8 +32,8 @@ export const KIND_CRITERIA = {
     meaning:
       "A question asking how much of a gradable quality something has, answerable as a rating on a scale.",
     examples: [
-      "On a scale of 1 to 10, how spicy is a jalapeño?",
-      "How risky is skydiving?",
+      "How spicy is a jalapeño?",
+      "On a scale of 1 to 10, how risky is skydiving?",
     ],
   },
   unsupported: {
@@ -54,6 +52,37 @@ export type QuestionKind = keyof typeof KIND_CRITERIA;
 export type SupportedKind = Exclude<QuestionKind, "unsupported">;
 
 export const NONE_OF_THESE = "None of the listed options";
+
+/**
+ * Rating levels, lowest first. Jev judges each level on its own and never
+ * sees its position, so each describes a situation rather than a number.
+ */
+export const RATING_LEVELS = [
+  {
+    label: "None",
+    description: "The subject of `query` has none of the quality that `query` asks about.",
+  },
+  {
+    label: "A little",
+    description:
+      "The subject of `query` has a little of the quality that `query` asks about, less than is typical.",
+  },
+  {
+    label: "Moderate",
+    description:
+      "The subject of `query` has a typical, middling amount of the quality that `query` asks about.",
+  },
+  {
+    label: "A lot",
+    description:
+      "The subject of `query` has a lot of the quality that `query` asks about, clearly more than is typical.",
+  },
+  {
+    label: "Extreme",
+    description:
+      "The subject of `query` has an extreme amount of the quality that `query` asks about, about as much as anything has.",
+  },
+] as const;
 
 export type Classification = {
   kind: QuestionKind;
@@ -79,13 +108,13 @@ export type Outcome =
   | {
       kind: "rate";
       classification: Classification;
-      scale: Scale;
-      /** The scale was not stated in the question, so the default was used. */
-      defaulted: boolean;
-      /** Expected rating on the question's own scale. */
-      rating: number;
+      /** The most probable level's label. */
+      level: string;
       confidence: number;
-      distribution: { value: number; probability: number }[];
+      /** Every level, lowest first. */
+      distribution: { label: string; probability: number }[];
+      /** The most probable level placed on the scale the question named, rounded. */
+      onScale: { scale: Scale; value: number } | null;
     }
   | {
       kind: "unsupported";
@@ -99,26 +128,6 @@ export interface JevClient {
   systemOne(
     request: SystemOneRequest<Questions>,
   ): PromiseLike<SystemOneResult<Questions>>;
-}
-
-function scaleCriteria(scale: Scale): ScoreCriteria {
-  const levels: EntryType[] = [];
-  for (let value = scale.min; value <= scale.max; value++) {
-    if (value === scale.min) {
-      levels.push(
-        `${value}, the lowest rating on the ${scale.min}–${scale.max} scale: the quality asked about in \`query\` is absent or as low as it gets.`,
-      );
-    } else if (value === scale.max) {
-      levels.push(
-        `${value}, the highest rating on the ${scale.min}–${scale.max} scale: the quality asked about in \`query\` is as high as it gets.`,
-      );
-    } else {
-      levels.push(
-        `${value} on the ${scale.min}–${scale.max} scale, where ${scale.min} means the quality asked about in \`query\` is absent and ${scale.max} means it is as high as it gets.`,
-      );
-    }
-  }
-  return levels as unknown as ScoreCriteria;
 }
 
 /**
@@ -153,12 +162,11 @@ export function buildRequest(query: string) {
     );
   }
 
-  if (scale.ok) {
-    questions.rate = score(
-      `Assume \`query\` asks for a rating from ${scale.scale.min} to ${scale.scale.max}. Using well-established general knowledge, how would a well-informed person rate what \`query\` asks about?`,
-      scaleCriteria(scale.scale),
-    );
-  }
+  const [lowest, next, ...higher] = RATING_LEVELS.map((level) => level.description);
+  questions.rate = score(
+    "Assume `query` asks how much of a quality its subject has. Using well-established general knowledge, how much of that quality does the subject have?",
+    [lowest, next, ...higher],
+  );
 
   const request: SystemOneRequest<Questions> = {
     state: { query },
@@ -224,30 +232,37 @@ export function interpret(
     }
     case "rate": {
       const answer = answers.rate;
-      if (!built.scale.ok || !isType(answer, "score")) {
+      if (!built.scale.ok) {
         return {
           kind: "unsupported",
           classification,
-          reason: built.scale.ok
-            ? undefined
-            : `It looks like you want a rating, but ${built.scale.reason.charAt(0).toLowerCase()}${built.scale.reason.slice(1)}`,
+          reason: `It looks like you want a rating, but ${built.scale.reason.charAt(0).toLowerCase()}${built.scale.reason.slice(1)}`,
         };
       }
-      const { scale, defaulted } = built.scale;
-      const distribution = Object.entries(answer.probabilities)
-        .map(([level, probability]) => ({
-          value: scale.min + Number(level),
-          probability,
-        }))
-        .sort((a, b) => a.value - b.value);
+      if (!isType(answer, "score")) break;
+      const probabilities = answer.probabilities as Record<string, number>;
+      const distribution = RATING_LEVELS.map((level, i) => ({
+        label: level.label,
+        probability: probabilities[String(i)] ?? 0,
+      }));
+      // The most probable level, not the expected score: Jev's levels are not
+      // calibrated for interpolating a magnitude between them.
+      const top = distribution.reduce(
+        (best, d, i) => (d.probability > distribution[best].probability ? i : best),
+        0,
+      );
+      const { scale } = built.scale;
+      const onScale = scale && {
+        scale,
+        value: Math.round(scale.min + (top / (RATING_LEVELS.length - 1)) * (scale.max - scale.min)),
+      };
       return {
         kind: "rate",
         classification,
-        scale,
-        defaulted,
-        rating: scale.min + answer.score,
+        level: distribution[top].label,
         confidence: answer.confidence,
         distribution,
+        onScale,
       };
     }
     case "unsupported":

@@ -1,6 +1,6 @@
 import type { Questions, SystemOneResult } from "@typesafe-ai/sdk";
 import { describe, expect, it } from "vitest";
-import { askJev, buildRequest, NONE_OF_THESE, type JevClient } from "./jev";
+import { askJev, buildRequest, NONE_OF_THESE, RATING_LEVELS, type JevClient } from "./jev";
 import { extractOptions, extractScale } from "./parse";
 
 describe("extractOptions", () => {
@@ -35,23 +35,18 @@ describe("extractScale", () => {
     ["How loud is a jet engine (1-5)?", 1, 5],
     ["How good is pizza, out of 10?", 0, 10],
   ])("reads %s", (question, min, max) => {
-    expect(extractScale(question)).toEqual({
-      ok: true,
-      scale: { min, max },
-      defaulted: false,
-    });
+    expect(extractScale(question)).toEqual({ ok: true, scale: { min, max } });
   });
 
-  it("defaults to 1 to 10", () => {
-    expect(extractScale("How risky is skydiving?")).toEqual({
-      ok: true,
-      scale: { min: 1, max: 10 },
-      defaulted: true,
-    });
+  it("returns no scale when the question names none", () => {
+    expect(extractScale("How risky is skydiving?")).toEqual({ ok: true, scale: null });
   });
 
-  it("rejects scales that are too wide or backwards", () => {
-    expect(extractScale("On a scale of 1 to 100, how hot is the sun?").ok).toBe(false);
+  it("accepts wide scales and rejects backwards ones", () => {
+    expect(extractScale("On a scale of 1 to 100, how hot is the sun?")).toEqual({
+      ok: true,
+      scale: { min: 1, max: 100 },
+    });
     expect(extractScale("On a scale of 5 to 1, how hot is the sun?").ok).toBe(false);
   });
 });
@@ -92,10 +87,14 @@ describe("buildRequest", () => {
     });
   });
 
-  it("builds one score level per step of the scale", () => {
-    const { questions } = buildRequest("On a scale of 1 to 5, how cold is Oslo?").request;
-    expect(questions.rate).toMatchObject({ type: "score" });
-    expect((questions.rate as unknown as { criteria: unknown[] }).criteria).toHaveLength(5);
+  it("rates on the same descriptive levels whatever scale is named", () => {
+    for (const q of ["How cold is Oslo?", "On a scale of 1 to 100, how cold is Oslo?"]) {
+      const { questions } = buildRequest(q).request;
+      expect(questions.rate).toMatchObject({
+        type: "score",
+        criteria: RATING_LEVELS.map((level) => level.description),
+      });
+    }
   });
 });
 
@@ -138,14 +137,23 @@ describe("askJev", () => {
     expect(outcome.options[1].none).toBe(true);
   });
 
-  it("shifts ratings onto the question's scale", async () => {
+  it("answers ratings with the most probable level", async () => {
     const outcome = await askJev(
       fakeClient({ kind: kind("rate"), yes_no: noulYes, rate }),
-      "On a scale of 1 to 5, how cold is Oslo in January?",
+      "How cold is Oslo in January?",
     );
-    expect(outcome).toMatchObject({ kind: "rate", rating: 3.5, defaulted: false });
+    expect(outcome).toMatchObject({ kind: "rate", level: "A lot", onScale: null });
     if (outcome.kind !== "rate") throw new Error("unreachable");
-    expect(outcome.distribution[0]).toEqual({ value: 1, probability: 0.1 });
+    expect(outcome.distribution[0]).toEqual({ label: "None", probability: 0.1 });
+  });
+
+  it("places the most probable level on the scale the question names", async () => {
+    const outcome = await askJev(
+      fakeClient({ kind: kind("rate"), yes_no: noulYes, rate }),
+      "On a scale of 1 to 100, how cold is Oslo in January?",
+    );
+    // Level 3 of 0–4 is three quarters of the way from 1 to 100.
+    expect(outcome).toMatchObject({ onScale: { scale: { min: 1, max: 100 }, value: 75 } });
   });
 
   it("explains unsupported questions", async () => {
@@ -166,9 +174,12 @@ describe("askJev", () => {
 
   it("explains a rating scale that can't be used", async () => {
     const outcome = await askJev(
-      fakeClient({ kind: kind("rate"), yes_no: noulYes }),
-      "On a scale of 1 to 100, how hot is the sun?",
+      fakeClient({ kind: kind("rate"), yes_no: noulYes, rate }),
+      "On a scale of 5 to 1, how hot is the sun?",
     );
-    expect(outcome).toMatchObject({ kind: "unsupported", reason: expect.stringContaining("too wide") });
+    expect(outcome).toMatchObject({
+      kind: "unsupported",
+      reason: expect.stringContaining("lower to a higher"),
+    });
   });
 });

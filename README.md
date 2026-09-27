@@ -10,7 +10,7 @@ Jev answers three kinds of question:
 | --- | --- | --- |
 | Yes / no | *Can penguins fly?* | Yes or no, with Jev's probability |
 | Pick one | *Which is the largest planet: Mars, Jupiter or Venus?* | The chosen option, with a probability for each |
-| Rating | *On a scale of 1 to 5, how spicy is a jalapeño?* | Expected rating and its distribution (1–10 if no scale is given) |
+| Rating | *How spicy is a jalapeño?* | The most likely of five levels (none to extreme), with a probability for each; a named scale such as "1 to 10" also gets an approximate number |
 
 Anything else gets a message explaining how to phrase the question.
 
@@ -24,7 +24,9 @@ results are shareable links. Each search makes **one** Jev request
 - `yes_no` (noul): the answer, if it is a yes/no question;
 - `pick_one` (choice): the answer among the listed options plus "none of the listed options",
   asked only when code found options after a colon (`src/lib/parse.ts`);
-- `rate` (score): the rating, one level per step of the scale code found in the question.
+- `rate` (score): the rating on five descriptive levels. Jev judges each level on its own and
+  never sees its number, so levels describe situations; code maps the result onto any scale
+  the question names (`src/lib/parse.ts`).
 
 Code then uses only the answer matching `kind`. Asking speculatively saves a
 second round trip at the cost of a few extra tokens per search.

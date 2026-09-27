@@ -4,13 +4,11 @@
 
 export const MAX_OPTIONS = 10;
 export const MAX_OPTION_LENGTH = 120;
-export const MAX_SCALE_LEVELS = 11;
-export const DEFAULT_SCALE = { min: 1, max: 10 } as const;
 
 export type Scale = { min: number; max: number };
 
 export type ScaleParse =
-  | { ok: true; scale: Scale; defaulted: boolean }
+  | { ok: true; scale: Scale | null }
   | { ok: false; reason: string };
 
 function cleanOption(raw: string): string {
@@ -61,8 +59,9 @@ const SCALE_PATTERNS: RegExp[] = [
 ];
 
 /**
- * Finds the rating scale a question asks for, e.g. "on a scale of 1 to 5" or
- * "out of 10". Questions without a scale use 1–10.
+ * Finds the rating scale a question names, e.g. "on a scale of 1 to 5" or
+ * "out of 10". Jev rates on descriptive levels; code maps the result onto this
+ * scale, so any range works. `scale` is null when the question names none.
  */
 export function extractScale(question: string): ScaleParse {
   let scale: Scale | null = null;
@@ -77,7 +76,7 @@ export function extractScale(question: string): ScaleParse {
     const outOf = question.match(/\bout\s+of\s+(\d+)\b/i);
     if (outOf) scale = { min: 0, max: Number(outOf[1]) };
   }
-  if (!scale) return { ok: true, scale: { ...DEFAULT_SCALE }, defaulted: true };
+  if (!scale) return { ok: true, scale: null };
 
   if (scale.min >= scale.max) {
     return {
@@ -85,11 +84,5 @@ export function extractScale(question: string): ScaleParse {
       reason: `The scale ${scale.min} to ${scale.max} must go from a lower to a higher number.`,
     };
   }
-  if (scale.max - scale.min + 1 > MAX_SCALE_LEVELS) {
-    return {
-      ok: false,
-      reason: `Jev can rate on scales with up to ${MAX_SCALE_LEVELS} steps, such as 1 to 10 or 0 to 10; ${scale.min} to ${scale.max} is too wide.`,
-    };
-  }
-  return { ok: true, scale, defaulted: false };
+  return { ok: true, scale };
 }

@@ -4,7 +4,6 @@ import { RatingChart } from "@/components/RatingChart";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -52,14 +51,12 @@ function AnswerCard({
           {answer}
         </CardTitle>
         <CardDescription>{description}</CardDescription>
-        <CardAction>
-          <Badge variant="secondary" title="How sure Jev is about the kind of question">
-            Read as {KIND_LABEL[outcome.kind].toLowerCase()}, {pct(outcome.classification.confidence)}
-          </Badge>
-        </CardAction>
       </CardHeader>
       <CardContent>{children}</CardContent>
-      <CardFooter className="text-xs text-muted-foreground">
+      <CardFooter className="flex-wrap gap-x-3 gap-y-2 text-xs text-muted-foreground">
+        <Badge variant="secondary" title="How sure Jev is about the kind of question">
+          Read as {KIND_LABEL[outcome.kind].toLowerCase()}, {pct(outcome.classification.confidence)}
+        </Badge>
         Jev’s judgment from general knowledge, not a cited source.
       </CardFooter>
     </Card>
@@ -156,22 +153,23 @@ export function Answer({ outcome }: { outcome: Outcome }) {
           </ul>
         </AnswerCard>
       );
-    case "rate":
+    case "rate": {
+      const { onScale } = outcome;
       return (
         <AnswerCard
           outcome={outcome}
-          answer={
-            <>
-              {outcome.rating.toFixed(1)}
-              <span className="text-xl font-medium text-muted-foreground"> out of {outcome.scale.max}</span>
-            </>
-          }
-          description={`Expected rating on a ${outcome.scale.min} to ${outcome.scale.max} scale${
-            outcome.defaulted ? ", since the question didn’t name one" : ""
-          }. Jev is ${pct(outcome.confidence)} confident.`}
+          answer={outcome.level}
+          description={`The most likely of Jev’s five levels, at ${pct(
+            Math.max(...outcome.distribution.map((d) => d.probability)),
+          )}.${
+            onScale
+              ? ` Roughly ${onScale.value} on your ${onScale.scale.min} to ${onScale.scale.max} scale.`
+              : ""
+          }`}
         >
           <RatingChart distribution={outcome.distribution} />
         </AnswerCard>
       );
+    }
   }
 }

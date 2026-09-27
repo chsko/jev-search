@@ -14,10 +14,10 @@ export const EXAMPLES = {
   },
   rate: {
     label: "Rating",
-    description: "Name a scale of up to 11 steps, or Jev rates from 1 to 10.",
+    description: "Ask how much of something there is. Name a scale to also get a rough number.",
     questions: [
-      "On a scale of 1 to 10, how spicy is a jalapeño?",
-      "How risky is skydiving?",
+      "How spicy is a jalapeño?",
+      "On a scale of 1 to 10, how risky is skydiving?",
     ],
   },
 } as const;

@@ -11,7 +11,9 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
 
 ## Design
 
-- UI is built with shadcn/ui (`components.json`, components in `src/components/ui`).
+- UI is built with shadcn/ui, style `radix-nova` (`components.json`, components in
+  `src/components/ui`). `pnpm dlx shadcn@latest apply` resets `globals.css` and fonts to
+  neutral defaults; restore the Jev theme and fonts afterwards.
   Follow the `shadcn` skill in `.claude/skills/shadcn`: compose existing components,
   use semantic tokens (`bg-primary`, `text-muted-foreground`), never raw colours.
   Add components with `pnpm dlx shadcn@latest add <name>`.
@@ -22,6 +24,13 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
 - The logo (`src/components/Logo.tsx`) is Bricolage Grotesque ExtraBold outlines
   with a gauge replacing the dot of the "j"; the favicon (`src/app/icon.svg`) is the gauge.
   Copy is sentence case.
+
+## Jev integration notes
+
+- Score levels must describe situations: Jev never sees a level's number, and the API
+  accepts at most 10 levels. Ratings use five fixed levels (`RATING_LEVELS` in
+  `src/lib/jev.ts`); code maps the most probable level onto any scale the user names.
+- Don't present a score's expected value as an exact magnitude between levels.
 
 ## Commands
 
