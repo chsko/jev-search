@@ -29,8 +29,8 @@ export function SearchBox({
           defaultValue={defaultValue}
           autoFocus={autoFocus}
           autoComplete="off"
-          aria-label="Ask Jev a question"
-          placeholder="Ask Jev a question…"
+          aria-label="Ask Needle a question"
+          placeholder="Ask a question…"
           className="text-base"
         />
         <InputGroupAddon align="inline-end" className="pr-1.5">

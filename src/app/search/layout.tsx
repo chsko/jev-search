@@ -9,7 +9,7 @@ export default function SearchLayout({ children }: LayoutProps<"/search">) {
     <>
       <header className="flex flex-col">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-6">
-          <Logo className="h-9" />
+          <Logo className="h-7" />
           <div className="flex-1">
             <Suspense fallback={<SearchBox />}>
               <QueryBox />

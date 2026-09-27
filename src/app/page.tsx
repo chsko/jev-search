@@ -6,10 +6,10 @@ import { EXAMPLES } from "@/lib/examples";
 export default function Home() {
   return (
     <main id="main" className="flex flex-1 flex-col items-center px-4 pt-[16vh] pb-16">
-      <h1 className="sr-only">Jev Search</h1>
-      <Logo className="h-24 sm:h-32" />
+      <h1 className="sr-only">Needle</h1>
+      <Logo className="h-16 sm:h-24" />
       <p className="mt-5 max-w-md text-center text-balance text-muted-foreground">
-        Ask a question and see Jev’s answer, with how sure it is.
+        Ask a question. Needle finds the answer and shows how sure it is.
       </p>
       <div className="mt-8 w-full max-w-xl">
         <SearchBox />

@@ -16,21 +16,21 @@ async function readQuery(searchParams: Props["searchParams"]) {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const q = await readQuery(searchParams);
-  return { title: q ? `${q} – Jev Search` : "Jev Search" };
+  return { title: q ? `${q} – Needle` : "Needle" };
 }
 
 function describeError(error: unknown): string {
   if (error instanceof APIError) {
     if (error.status === 401 || error.status === 403) {
-      return "Jev Search isn’t authorised to call Jev. Check the TYPESAFE_API_KEY setting.";
+      return "Needle isn’t authorised to call its answer service. Check the TYPESAFE_API_KEY setting.";
     }
-    if (error.status === 429) return "Jev is busy right now. Please try again in a moment.";
-    return "Jev couldn’t answer right now. Please try again.";
+    if (error.status === 429) return "Needle is busy right now. Please try again in a moment.";
+    return "Needle couldn’t answer right now. Please try again.";
   }
   if (error instanceof TypeSafeError && /api key/i.test(error.message)) {
-    return "Jev Search isn’t configured yet: set TYPESAFE_API_KEY on the server.";
+    return "Needle isn’t configured yet: set TYPESAFE_API_KEY on the server.";
   }
-  return "Jev couldn’t be reached. Please try again.";
+  return "Needle couldn’t reach its answer service. Please try again.";
 }
 
 export default async function SearchPage({ searchParams }: Props) {
@@ -50,7 +50,7 @@ export default async function SearchPage({ searchParams }: Props) {
   }
   return (
     <>
-      <h1 className="sr-only">Jev’s answer to “{q}”</h1>
+      <h1 className="sr-only">Needle’s answer to “{q}”</h1>
       <Answer outcome={outcome} />
     </>
   );

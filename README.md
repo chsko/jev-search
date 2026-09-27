@@ -1,14 +1,14 @@
-# Jev Search
+# Needle
 
-A search page that answers questions with [Jev](https://typesafe.ai), TypeSafe's
-System One model. Built with Next.js (App Router), TypeScript, Tailwind CSS and
+A search engine that answers questions instead of listing links, powered by
+[Jev](https://typesafe.ai), TypeSafe's System One model. Built with Next.js (App Router), TypeScript, Tailwind CSS and
 [shadcn/ui](https://ui.shadcn.com), deployed on Vercel.
 
-Jev answers three kinds of question:
+Needle answers three kinds of question:
 
 | Kind | Example | Answer shown |
 | --- | --- | --- |
-| Yes / no | *Can penguins fly?* | Yes or no, with Jev's probability |
+| Yes / no | *Can penguins fly?* | Yes or no, with its probability |
 | Pick one | *Which is the largest planet: Mars, Jupiter or Venus?* | The chosen option, with a probability for each |
 | Rating | *How spicy is a jalapeño?* | The most likely of five levels (none to extreme), with a probability for each; a named scale such as "1 to 10" also gets an approximate number |
 

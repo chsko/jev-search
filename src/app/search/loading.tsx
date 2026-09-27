@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <Card role="status" aria-label="Jev is thinking…">
+    <Card role="status" aria-label="Finding the answer…">
       <CardHeader>
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-10 w-48" />

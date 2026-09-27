@@ -14,8 +14,8 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Jev Search",
-  description: "Ask a yes/no, pick-one or rating question and see how sure Jev is.",
+  title: "Needle",
+  description: "Ask a yes/no, pick-one or rating question. Needle finds the answer and shows how sure it is.",
 };
 
 export const viewport: Viewport = {
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="flex flex-col">
           <Separator />
           <p className="px-4 py-4 text-center text-xs text-muted-foreground">
-            Answers by Jev, a System One model from{" "}
+            Answers powered by Jev, a System One model from{" "}
             <a href="https://typesafe.ai" className="underline-offset-4 hover:underline">
               TypeSafe
             </a>

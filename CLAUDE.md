@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+The product is **Needle**, a search engine whose answers come from TypeSafe's Jev model.
+Don't brand the product with "Jev" (it is TypeSafe's model name); UI copy speaks as
+Needle and only the footer credits Jev.
+
 @AGENTS.md
 
 ## TypeSafe
@@ -21,8 +25,10 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   `web-design-guidelines` skill to review UI changes.
 - Theme tokens live in `src/app/globals.css`: violet `--primary` is the only accent.
   Dark mode follows the system setting (Tailwind's media-query `dark` variant).
-- The logo (`src/components/Logo.tsx`) is Bricolage Grotesque ExtraBold outlines
-  with a gauge replacing the dot of the "j"; the favicon (`src/app/icon.svg`) is the gauge.
+- The logo (`src/components/Logo.tsx`) is Bricolage Grotesque ExtraBold outlines of
+  "needle" with the "l" drawn as a violet sewing needle (search: a needle in a haystack;
+  judgment: where the needle lands). The favicon (`src/app/icon.svg`) is a dial whose
+  pointer is that needle.
   Copy is sentence case.
 
 ## Jev integration notes

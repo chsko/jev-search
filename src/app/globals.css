@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 
 /* shadcn/ui tokens. Neutrals carry a faint violet tint so the single signal
-   colour, --primary (Jev violet), belongs to the palette. Dark mode follows
+   colour, --primary (Needle violet), belongs to the palette. Dark mode follows
    the system setting through Tailwind's default media-query `dark` variant. */
 :root {
   --radius: 0.75rem;
