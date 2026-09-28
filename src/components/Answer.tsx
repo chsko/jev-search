@@ -1,4 +1,4 @@
-import { MessageCircleQuestionIcon } from "lucide-react";
+import { FileSearchIcon, MessageCircleQuestionIcon } from "lucide-react";
 import { ExampleQuestions } from "@/components/ExampleQuestions";
 import { RatingChart } from "@/components/RatingChart";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/empty";
 import { Progress } from "@/components/ui/progress";
 import { EXAMPLES } from "@/lib/examples";
-import type { Outcome, SupportedKind } from "@/lib/jev";
+import type { Grounding, Outcome, SupportedKind } from "@/lib/jev";
 import { cn } from "@/lib/utils";
 
 const percent = new Intl.NumberFormat("en", { style: "percent", maximumFractionDigits: 0 });
@@ -32,13 +32,39 @@ const KIND_LABEL: Record<SupportedKind, string> = {
   rate: "Rating",
 };
 
+function Evidence({ grounding }: { grounding: Grounding }) {
+  const [best, ...others] = grounding.evidence;
+  return (
+    <section aria-label="From your text" className="flex flex-col gap-3 border-t pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="font-heading text-sm font-medium">From your text</h3>
+        {grounding.verdict === "partial" && (
+          <Badge variant="outline">Your text only partly answers this</Badge>
+        )}
+      </div>
+      <blockquote className="border-l-2 border-primary pl-3 text-sm">
+        {best.text}
+        <span className="mt-1 block text-xs text-muted-foreground">
+          {pct(best.probability)} likely to hold the answer
+        </span>
+      </blockquote>
+      {others.map((p) => (
+        <blockquote key={p.index} className="border-l-2 pl-3 text-sm text-muted-foreground">
+          {p.text}
+          <span className="mt-1 block text-xs">Also relevant, {pct(p.probability)}</span>
+        </blockquote>
+      ))}
+    </section>
+  );
+}
+
 function AnswerCard({
   outcome,
   answer,
   description,
   children,
 }: {
-  outcome: Exclude<Outcome, { kind: "unsupported" }>;
+  outcome: Extract<Outcome, { kind: SupportedKind }>;
   answer: React.ReactNode;
   description: React.ReactNode;
   children: React.ReactNode;
@@ -52,12 +78,17 @@ function AnswerCard({
         </CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="flex flex-col gap-5">
+        {children}
+        {outcome.grounding && <Evidence grounding={outcome.grounding} />}
+      </CardContent>
       <CardFooter className="flex-wrap gap-x-3 gap-y-2 text-xs text-muted-foreground">
         <Badge variant="secondary" title="How sure Quairy is about the kind of question">
           Read as {KIND_LABEL[outcome.kind].toLowerCase()}, {pct(outcome.classification.confidence)}
         </Badge>
-        Based on general knowledge, not a cited source.
+        {outcome.grounding
+          ? "Based only on the text you pasted."
+          : "Based on general knowledge, not a cited source."}
       </CardFooter>
     </Card>
   );
@@ -83,7 +114,31 @@ function ProbabilityRow({
   );
 }
 
-export function Guidance({ reason }: { reason?: string }) {
+function NotInText() {
+  return (
+    <Empty className="border">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <FileSearchIcon />
+        </EmptyMedia>
+        <EmptyTitle>Your text doesn’t say</EmptyTitle>
+        <EmptyDescription>
+          Quairy answers only from the text you pasted, and nothing in it addresses this
+          question. Try asking about something the text covers.
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
+export function Guidance({
+  reason,
+  examples = true,
+}: {
+  reason?: string;
+  /** Show example searches; off when asking about a pasted text. */
+  examples?: boolean;
+}) {
   return (
     <Empty className="border">
       <EmptyHeader>
@@ -105,7 +160,7 @@ export function Guidance({ reason }: { reason?: string }) {
                 <h2 className="font-display font-semibold">{label}</h2>
                 <p className="text-sm text-muted-foreground">{description}</p>
               </div>
-              <ExampleQuestions questions={questions} />
+              {examples && <ExampleQuestions questions={questions} />}
             </div>
           );
         })}
@@ -114,10 +169,19 @@ export function Guidance({ reason }: { reason?: string }) {
   );
 }
 
-export function Answer({ outcome }: { outcome: Outcome }) {
+export function Answer({
+  outcome,
+  mode = "web",
+}: {
+  outcome: Outcome;
+  /** "text" when answering from a pasted text. */
+  mode?: "web" | "text";
+}) {
   switch (outcome.kind) {
     case "unsupported":
-      return <Guidance reason={outcome.reason} />;
+      return <Guidance reason={outcome.reason} examples={mode === "web"} />;
+    case "not_in_text":
+      return <NotInText />;
     case "yes_no": {
       const yes = outcome.yes;
       const answer = yes >= 0.5 ? "Yes" : "No";

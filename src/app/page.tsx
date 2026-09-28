@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { FileTextIcon } from "lucide-react";
 import { ExampleQuestions } from "@/components/ExampleQuestions";
 import { Logo } from "@/components/Logo";
 import { SearchBox } from "@/components/SearchBox";
+import { Button } from "@/components/ui/button";
 import { NAV_FORWARD, PageTransition } from "@/components/Transitions";
 import { EXAMPLES } from "@/lib/examples";
 
@@ -16,6 +19,12 @@ export default function Home() {
         <div className="mt-8 w-full max-w-xl">
           <SearchBox transitionType={NAV_FORWARD} />
         </div>
+        <Button asChild variant="link" size="sm" className="mt-2 text-muted-foreground">
+          <Link href="/text" transitionTypes={[NAV_FORWARD]}>
+            <FileTextIcon data-icon="inline-start" />
+            Ask about a text you paste
+          </Link>
+        </Button>
         <section aria-label="Example questions" className="mt-12 grid w-full max-w-3xl gap-8 sm:grid-cols-3">
           {Object.entries(EXAMPLES).map(([kind, { label, description, questions }]) => (
             <div key={kind} className="flex flex-col gap-3">

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { APIError, TypeSafeError } from "@typesafe-ai/sdk";
 import { AlertCircleIcon } from "lucide-react";
 import { ViewTransition } from "react";
 import { Answer } from "@/components/Answer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getJevClient } from "@/lib/client";
+import { describeError } from "@/lib/errors";
 import { askJev, MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
 
 type Props = PageProps<"/search">;
@@ -18,20 +18,6 @@ async function readQuery(searchParams: Props["searchParams"]) {
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const q = await readQuery(searchParams);
   return { title: q ? `${q} – Quairy` : "Quairy" };
-}
-
-function describeError(error: unknown): string {
-  if (error instanceof APIError) {
-    if (error.status === 401 || error.status === 403) {
-      return "Quairy isn’t authorised to call its answer service. Check the TYPESAFE_API_KEY setting.";
-    }
-    if (error.status === 429) return "Quairy is busy right now. Please try again in a moment.";
-    return "Quairy couldn’t answer right now. Please try again.";
-  }
-  if (error instanceof TypeSafeError && /api key/i.test(error.message)) {
-    return "Quairy isn’t configured yet: set TYPESAFE_API_KEY on the server.";
-  }
-  return "Quairy couldn’t reach its answer service. Please try again.";
 }
 
 export default async function SearchPage({ searchParams }: Props) {

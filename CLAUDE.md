@@ -44,6 +44,12 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   accepts at most 10 levels. Ratings use five fixed levels (`RATING_LEVELS` in
   `src/lib/jev.ts`); code maps the most probable level onto any scale the user names.
 - Don't present a score's expected value as an exact magnitude between levels.
+- "Ask about a text" (`/text`, server action in `src/app/text/actions.ts`): `toPassages`
+  (`src/lib/passages.ts`) splits the text into at most 250 tagged passages (`L000| …`; a
+  Choice takes at most 255 options). The same request adds a Noul "does the text answer
+  this" (below 0.35: "Your text doesn't say"; 0.35–0.7: partly) and a Choice over passage
+  IDs for the evidence, following TypeSafe's line-by-line search cookbook. Answers use
+  "only what `document` states or directly implies". Max text: 30,000 characters.
 
 ## Deployment
 

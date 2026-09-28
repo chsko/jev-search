@@ -11,6 +11,7 @@ import {
   type SystemOneResult,
 } from "@typesafe-ai/sdk";
 import { extractOptions, extractScale, type Scale } from "./parse";
+import { passageId, tagPassages } from "./passages";
 
 export const MAX_QUERY_LENGTH = 400;
 
@@ -90,22 +91,38 @@ export type Classification = {
   probabilities: Record<QuestionKind, number>;
 };
 
+/** Thresholds on the "does the text answer this" probability, from TypeSafe's line-by-line search cookbook. */
+export const ANSWERED = 0.7;
+export const NOT_ANSWERED = 0.35;
+
+/** How an answer about a pasted text is backed by that text. */
+export type Grounding = {
+  /** Probability that the text answers the question. */
+  answered: number;
+  /** The text answers it, or only partly addresses it. */
+  verdict: "answered" | "partial";
+  /** The passages most likely to hold the answer, most probable first. */
+  evidence: { index: number; text: string; probability: number }[];
+};
+
+type Grounded = { grounding?: Grounding };
+
 export type Outcome =
-  | {
+  | ({
       kind: "yes_no";
       classification: Classification;
       /** Probability that the answer is yes. */
       yes: number;
-    }
-  | {
+    } & Grounded)
+  | ({
       kind: "pick_one";
       classification: Classification;
       choice: string;
       confidence: number;
       /** Listed options and "none of them", most probable first. */
       options: { label: string; probability: number; none: boolean }[];
-    }
-  | {
+    } & Grounded)
+  | ({
       kind: "rate";
       classification: Classification;
       /** The most probable level's label. */
@@ -115,6 +132,12 @@ export type Outcome =
       distribution: { label: string; probability: number }[];
       /** The most probable level placed on the scale the question named, rounded. */
       onScale: { scale: Scale; value: number } | null;
+    } & Grounded)
+  | {
+      /** A question about a pasted text that the text does not answer. */
+      kind: "not_in_text";
+      classification: Classification;
+      answered: number;
     }
   | {
       kind: "unsupported";
@@ -134,10 +157,17 @@ export interface JevClient {
  * Builds one request that classifies the query and, speculatively, answers it
  * as each kind that code could prepare. The answers run in parallel with the
  * classification; only the one matching the classification is used.
+ *
+ * With `passages`, answers come only from that text, and two more questions in
+ * the same request ask whether the text answers the query and which passage
+ * does (TypeSafe's line-by-line search pattern).
  */
-export function buildRequest(query: string) {
+export function buildRequest(query: string, passages?: string[]) {
   const options = extractOptions(query);
   const scale = extractScale(query);
+  const basis = passages
+    ? "Using only what `document` states or directly implies"
+    : "Using well-established general knowledge";
 
   const questions: Questions = {
     kind: choice(
@@ -145,7 +175,7 @@ export function buildRequest(query: string) {
       KIND_CRITERIA,
     ),
     yes_no: noul(
-      "Assume `query` is a yes/no question. Using well-established general knowledge, is the answer to `query` yes?",
+      `Assume \`query\` is a yes/no question. ${basis}, is the answer to \`query\` yes?`,
       { true: "The answer is yes.", false: "The answer is no." },
     ),
   };
@@ -157,22 +187,32 @@ export function buildRequest(query: string) {
       criteria[NONE_OF_THESE] = null;
     }
     questions.pick_one = choice(
-      "Assume `query` asks which one of the listed alternatives is the answer. Using well-established general knowledge, which alternative best answers `query`? Choose the none option only if no listed alternative is a reasonable answer.",
+      `Assume \`query\` asks which one of the listed alternatives is the answer. ${basis}, which alternative best answers \`query\`? Choose the none option only if no listed alternative is a reasonable answer.`,
       criteria,
     );
   }
 
   const [lowest, next, ...higher] = RATING_LEVELS.map((level) => level.description);
   questions.rate = score(
-    "Assume `query` asks how much of a quality its subject has. Using well-established general knowledge, how much of that quality does the subject have?",
+    `Assume \`query\` asks how much of a quality its subject has. ${basis}, how much of that quality does the subject have?`,
     [lowest, next, ...higher],
   );
 
+  if (passages) {
+    questions.answered = noul("Does any line of `document` address or answer `query`?", {
+      true: "At least one line of the document states or directly implies the answer.",
+      false: "No line of the document addresses this.",
+    });
+    const lines: Record<string, null> = {};
+    passages.forEach((_, i) => (lines[passageId(i)] = null));
+    questions.where = choice("Which line of `document` contains the answer to `query`?", lines);
+  }
+
   const request: SystemOneRequest<Questions> = {
-    state: { query },
+    state: passages ? { query, document: tagPassages(passages) } : { query },
     questions,
   };
-  return { request, options, scale };
+  return { request, options, scale, passages };
 }
 
 function isType<T extends Question["type"]>(
@@ -199,11 +239,28 @@ export function interpret(
     probabilities: { ...kinds.probabilities },
   };
 
+  let grounding: Grounding | undefined;
+  if (built.passages && classification.kind !== "unsupported") {
+    const answered = answers.answered;
+    const where = answers.where;
+    if (!isType(answered, "noul") || !isType(where, "choice")) {
+      throw new Error("Jev did not say where the text answers the question.");
+    }
+    if (answered.noul < NOT_ANSWERED) {
+      return { kind: "not_in_text", classification, answered: answered.noul };
+    }
+    grounding = {
+      answered: answered.noul,
+      verdict: answered.noul >= ANSWERED ? "answered" : "partial",
+      evidence: evidenceFrom(built.passages, where.probabilities as Record<string, number>),
+    };
+  }
+
   switch (classification.kind) {
     case "yes_no": {
       const answer = answers.yes_no;
       if (!isType(answer, "noul")) break;
-      return { kind: "yes_no", classification, yes: answer.noul };
+      return { kind: "yes_no", classification, yes: answer.noul, grounding };
     }
     case "pick_one": {
       const answer = answers.pick_one;
@@ -228,6 +285,7 @@ export function interpret(
         choice: answer.choice,
         confidence: answer.confidence,
         options,
+        grounding,
       };
     }
     case "rate": {
@@ -263,6 +321,7 @@ export function interpret(
         confidence: answer.confidence,
         distribution,
         onScale,
+        grounding,
       };
     }
     case "unsupported":
@@ -271,9 +330,24 @@ export function interpret(
   throw new Error(`Jev returned no answer for a ${classification.kind} question.`);
 }
 
-/** Classifies and answers a query with a single Jev request. */
-export async function askJev(client: JevClient, query: string): Promise<Outcome> {
-  const built = buildRequest(query);
+/** The most probable passage, plus any runner-up that is also fairly likely. */
+function evidenceFrom(passages: string[], probabilities: Record<string, number>) {
+  return passages
+    .map((text, index) => ({ index, text, probability: probabilities[passageId(index)] ?? 0 }))
+    .sort((a, b) => b.probability - a.probability)
+    .filter((p, rank) => rank === 0 || (rank < 3 && p.probability >= 0.2));
+}
+
+/**
+ * Classifies and answers a query with a single Jev request, from general
+ * knowledge or, given `passages`, from that text alone.
+ */
+export async function askJev(
+  client: JevClient,
+  query: string,
+  passages?: string[],
+): Promise<Outcome> {
+  const built = buildRequest(query, passages);
   const result = await client.systemOne(built.request);
   return interpret(built, result);
 }

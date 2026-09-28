@@ -14,6 +14,12 @@ Quairy answers three kinds of question:
 
 Anything else gets a message explaining how to phrase the question.
 
+### Ask about a text
+
+At `/text`, paste any text (up to 30,000 characters) and ask the same kinds of question.
+Quairy answers only from that text, quotes the line the answer comes from, and says so
+when the text doesn't answer the question.
+
 ## How it works
 
 `/search?q=…` is a server-rendered page, so the API key stays on the server and
