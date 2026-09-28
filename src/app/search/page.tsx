@@ -6,6 +6,7 @@ import { ErrorCard } from "@/components/ErrorCard";
 import { describeError } from "@/lib/errors";
 import { MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
 import { search } from "@/lib/search";
+import { SITE_DESCRIPTION } from "@/lib/site";
 import { summarize } from "@/lib/summary";
 
 type Props = PageProps<"/search">;
@@ -21,7 +22,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
   // Link previews show the answer: the description here, and the card image,
   // which /card renders from the same question.
-  let description: string | undefined;
+  // A page’s Open Graph fields replace the layout’s, so fall back explicitly.
+  let description = SITE_DESCRIPTION;
   try {
     const summary = summarize(await search(q));
     if (summary) description = `${summary.answer}. ${summary.detail}`;

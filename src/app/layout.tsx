@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Separator } from "@/components/ui/separator";
 import { Analytics } from "@vercel/analytics/next";
+import { SITE_DESCRIPTION } from "@/lib/site";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -15,8 +16,7 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
 });
 
-const description =
-  "Ask a yes/no, pick-one or rating question. Quairy finds the answer and shows how sure it is.";
+const description = SITE_DESCRIPTION;
 
 export const metadata: Metadata = {
   title: "Quairy",
