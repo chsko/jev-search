@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import { ViewTransition } from "react";
 import { Answer } from "@/components/Answer";
 import { ErrorCard } from "@/components/ErrorCard";
-import { getJevClient } from "@/lib/client";
 import { describeError } from "@/lib/errors";
-import { askJev, MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
+import { MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
+import { search } from "@/lib/search";
+import { summarize } from "@/lib/summary";
 
 type Props = PageProps<"/search">;
 
@@ -16,7 +17,25 @@ async function readQuery(searchParams: Props["searchParams"]) {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const q = await readQuery(searchParams);
-  return { title: q ? `${q} – Quairy` : "Quairy" };
+  if (!q || q.length > MAX_QUERY_LENGTH) return { title: "Quairy" };
+
+  // Link previews show the answer: the description here, and the card image,
+  // which /card renders from the same question.
+  let description: string | undefined;
+  try {
+    const summary = summarize(await search(q));
+    if (summary) description = `${summary.answer}. ${summary.detail}`;
+  } catch {
+    // The page shows the error; the preview falls back to the site description.
+  }
+  const title = `${q} – Quairy`;
+  const image = { url: `/card?${new URLSearchParams({ q })}`, width: 1200, height: 630, alt: title };
+  return {
+    title,
+    description,
+    openGraph: { siteName: "Quairy", title, description, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
 }
 
 export default async function SearchPage({ searchParams }: Props) {
@@ -29,7 +48,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   let outcome: Outcome;
   try {
-    outcome = await askJev(getJevClient(), q);
+    outcome = await search(q);
   } catch (error) {
     console.error("Jev request failed", error);
     return <ErrorCard message={describeError(error)} />;

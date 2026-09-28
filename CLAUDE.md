@@ -61,6 +61,14 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   get "Nothing to compare here". Never pad the suggested qualities with irrelevant ones;
   fewer than two relevant qualities means "no factors".
 
+- Sharing: search pages carry the answer in their metadata, and `/card?q=…`
+  (`src/app/card/route.tsx`, `next/og`) renders the preview image (a brand card without `q`, for
+  unsupported questions, or on errors). `search` (`src/lib/search.ts`) is wrapped in React
+  `cache` so the page and its metadata share one Jev request; cards are CDN-cached for a day.
+  Answer wording lives in `summarize` (`src/lib/summary.ts`), shared by the answer card and the
+  share card. Satori can't read CSS variables, so the card spells out the light Quarry palette in
+  hex; update it when the palette changes. Answers about a pasted text have no Share button.
+
 ## Deployment
 
 Quairy deploys to Vercel. Use the `vercel` plugin (enabled in `.claude/settings.json`) for

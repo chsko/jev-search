@@ -2,11 +2,13 @@ import Link from "next/link";
 import { FileSearchIcon, MessageCircleQuestionIcon, SlidersHorizontalIcon } from "lucide-react";
 import { ExampleQuestions } from "@/components/ExampleQuestions";
 import { RatingChart } from "@/components/RatingChart";
+import { ShareButton } from "@/components/ShareButton";
 import { NAV_FORWARD } from "@/components/Transitions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -25,16 +27,9 @@ import { Progress } from "@/components/ui/progress";
 import { EXAMPLES } from "@/lib/examples";
 import { MAX_COMPARE_OPTIONS } from "@/lib/compare";
 import type { Grounding, Outcome, SupportedKind } from "@/lib/jev";
+import { KIND_LABEL, pct, summarize } from "@/lib/summary";
 import { cn } from "@/lib/utils";
 
-const percent = new Intl.NumberFormat("en", { style: "percent", maximumFractionDigits: 0 });
-const pct = (p: number) => percent.format(p);
-
-const KIND_LABEL: Record<SupportedKind, string> = {
-  yes_no: "Yes or no",
-  pick_one: "Pick one",
-  rate: "Rating",
-};
 
 function Evidence({ grounding }: { grounding: Grounding }) {
   const [best, ...others] = grounding.evidence;
@@ -64,23 +59,28 @@ function Evidence({ grounding }: { grounding: Grounding }) {
 
 function AnswerCard({
   outcome,
-  answer,
-  description,
+  shareable,
   children,
 }: {
   outcome: Extract<Outcome, { kind: SupportedKind }>;
-  answer: React.ReactNode;
-  description: React.ReactNode;
+  /** Offer a Share button; answers about a pasted text stay private. */
+  shareable: boolean;
   children: React.ReactNode;
 }) {
+  const summary = summarize(outcome)!;
   return (
     <Card>
       <CardHeader>
         <CardDescription>{KIND_LABEL[outcome.kind]} question</CardDescription>
         <CardTitle className="font-display text-4xl font-bold tracking-tight break-words">
-          {answer}
+          {summary.answer}
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>{summary.detail}</CardDescription>
+        {shareable && (
+          <CardAction>
+            <ShareButton />
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         {children}
@@ -184,39 +184,24 @@ export function Answer({
   /** Where a pick-one answer can be compared in detail. */
   compareHref?: string;
 }) {
+  const shareable = mode === "web";
   switch (outcome.kind) {
     case "unsupported":
       return <Guidance reason={outcome.reason} examples={mode === "web"} />;
     case "not_in_text":
       return <NotInText />;
-    case "yes_no": {
-      const yes = outcome.yes;
-      const answer = yes >= 0.5 ? "Yes" : "No";
-      const close = yes > 0.4 && yes < 0.6;
+    case "yes_no":
       return (
-        <AnswerCard
-          outcome={outcome}
-          answer={close ? "Too close to call" : answer}
-          description={
-            close
-              ? `Quairy leans ${answer.toLowerCase()}, at ${pct(Math.max(yes, 1 - yes))}.`
-              : `Quairy is ${pct(Math.max(yes, 1 - yes))} sure.`
-          }
-        >
+        <AnswerCard outcome={outcome} shareable={shareable}>
           <ul className="flex flex-col gap-3">
-            <ProbabilityRow label="Yes" probability={yes} />
-            <ProbabilityRow label="No" probability={1 - yes} />
+            <ProbabilityRow label="Yes" probability={outcome.yes} />
+            <ProbabilityRow label="No" probability={1 - outcome.yes} />
           </ul>
         </AnswerCard>
       );
-    }
     case "pick_one":
       return (
-        <AnswerCard
-          outcome={outcome}
-          answer={outcome.choice}
-          description={`Quairy is ${pct(outcome.confidence)} confident in this pick.`}
-        >
+        <AnswerCard outcome={outcome} shareable={shareable}>
           <ul className="flex flex-col gap-3">
             {outcome.options.map((o) => (
               <ProbabilityRow key={o.label} label={o.label} probability={o.probability} muted={o.none} />
@@ -234,23 +219,11 @@ export function Answer({
             )}
         </AnswerCard>
       );
-    case "rate": {
-      const { onScale } = outcome;
+    case "rate":
       return (
-        <AnswerCard
-          outcome={outcome}
-          answer={outcome.level}
-          description={`The most likely of five levels, at ${pct(
-            Math.max(...outcome.distribution.map((d) => d.probability)),
-          )}.${
-            onScale
-              ? ` Roughly ${onScale.value} on your ${onScale.scale.min} to ${onScale.scale.max} scale.`
-              : ""
-          }`}
-        >
+        <AnswerCard outcome={outcome} shareable={shareable}>
           <RatingChart distribution={outcome.distribution} />
         </AnswerCard>
       );
-    }
   }
 }

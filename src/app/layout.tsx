@@ -15,9 +15,15 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
 });
 
+const description =
+  "Ask a yes/no, pick-one or rating question. Quairy finds the answer and shows how sure it is.";
+
 export const metadata: Metadata = {
   title: "Quairy",
-  description: "Ask a yes/no, pick-one or rating question. Quairy finds the answer and shows how sure it is.",
+  description,
+  // Relative URLs resolve against the deployment's URL on Vercel.
+  openGraph: { siteName: "Quairy", title: "Quairy", description, images: "/card" },
+  twitter: { card: "summary_large_image", title: "Quairy", description, images: "/card" },
 };
 
 export const viewport: Viewport = {
