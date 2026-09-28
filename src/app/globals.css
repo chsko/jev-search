@@ -2,52 +2,53 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* shadcn/ui tokens. Neutrals carry a faint violet tint so the single signal
-   colour, --primary (the accent), belongs to the palette. Dark mode follows
-   the system setting through Tailwind's default media-query `dark` variant. */
+/* shadcn/ui tokens: the Quarry palette. Cool slate neutrals let a single
+   ochre accent, --primary, carry the brand (the "ai" in the logo, the Ask
+   button, probability bars). Dark mode follows the system setting through
+   Tailwind's default media-query `dark` variant. */
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.99 0.003 285);
-  --foreground: oklch(0.17 0.02 285);
+  --background: oklch(0.99 0.0024 250);
+  --foreground: oklch(0.19 0.012 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.17 0.02 285);
+  --card-foreground: oklch(0.19 0.012 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.17 0.02 285);
-  --primary: oklch(0.51 0.25 281);
-  --primary-foreground: oklch(0.99 0.005 285);
-  --secondary: oklch(0.96 0.01 285);
-  --secondary-foreground: oklch(0.25 0.03 285);
-  --muted: oklch(0.96 0.008 285);
-  --muted-foreground: oklch(0.5 0.02 285);
-  --accent: oklch(0.95 0.025 285);
-  --accent-foreground: oklch(0.3 0.12 281);
+  --popover-foreground: oklch(0.19 0.012 250);
+  --primary: oklch(0.53 0.12 66);
+  --primary-foreground: oklch(0.99 0.01 80);
+  --secondary: oklch(0.96 0.006 250);
+  --secondary-foreground: oklch(0.25 0.012 250);
+  --muted: oklch(0.96 0.006 250);
+  --muted-foreground: oklch(0.5 0.012 250);
+  --accent: oklch(0.96 0.03 80);
+  --accent-foreground: oklch(0.38 0.09 62);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0.01 285);
-  --input: oklch(0.89 0.012 285);
-  --ring: oklch(0.51 0.25 281 / 60%);
+  --border: oklch(0.91 0.006 250);
+  --input: oklch(0.89 0.0084 250);
+  --ring: oklch(0.53 0.12 66 / 55%);
   --chart-1: var(--primary);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: oklch(0.16 0.015 285);
-    --foreground: oklch(0.96 0.005 285);
-    --card: oklch(0.2 0.02 285);
-    --card-foreground: oklch(0.96 0.005 285);
-    --popover: oklch(0.2 0.02 285);
-    --popover-foreground: oklch(0.96 0.005 285);
-    --primary: oklch(0.74 0.15 285);
-    --primary-foreground: oklch(0.18 0.05 285);
-    --secondary: oklch(0.26 0.02 285);
-    --secondary-foreground: oklch(0.96 0.005 285);
-    --muted: oklch(0.26 0.02 285);
-    --muted-foreground: oklch(0.72 0.02 285);
-    --accent: oklch(0.3 0.05 285);
-    --accent-foreground: oklch(0.92 0.04 285);
+    --background: oklch(0.17 0.009 250);
+    --foreground: oklch(0.96 0.003 250);
+    --card: oklch(0.21 0.012 250);
+    --card-foreground: oklch(0.96 0.003 250);
+    --popover: oklch(0.21 0.012 250);
+    --popover-foreground: oklch(0.96 0.003 250);
+    --primary: oklch(0.8 0.13 78);
+    --primary-foreground: oklch(0.2 0.04 70);
+    --secondary: oklch(0.27 0.012 250);
+    --secondary-foreground: oklch(0.96 0.003 250);
+    --muted: oklch(0.27 0.012 250);
+    --muted-foreground: oklch(0.72 0.012 250);
+    --accent: oklch(0.32 0.05 70);
+    --accent-foreground: oklch(0.92 0.06 80);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.74 0.15 285 / 60%);
+    --ring: oklch(0.8 0.13 78 / 55%);
   }
 }
 

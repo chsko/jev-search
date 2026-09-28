@@ -24,7 +24,8 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   Add components with `pnpm dlx shadcn@latest add <name>`.
 - Use the `frontend-design` plugin skill for visual direction, and the
   `web-design-guidelines` skill to review UI changes.
-- Theme tokens live in `src/app/globals.css`: violet `--primary` is the only accent.
+- Theme tokens live in `src/app/globals.css` (the Quarry palette): cool slate neutrals and
+  one ochre `--primary` accent. Keep button text at 4.5:1 contrast or better.
   Dark mode follows the system setting (Tailwind's media-query `dark` variant).
 - The logo (`src/components/Logo.tsx`) is Bricolage Grotesque ExtraBold outlines of
   "quairy" with the "ai" in the accent colour (`fill-primary`). The favicon

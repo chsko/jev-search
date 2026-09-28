@@ -48,7 +48,9 @@ export function SearchBox({
     <Form action="/search" className="w-full" onSubmit={onSubmit}>
       {/* Morphs between the centre of the home page and the results header. */}
       <ViewTransition name="search-box" share="morph" default="none">
-        <InputGroup className="h-12 rounded-full bg-card">
+        {/* The group dims itself when anything inside is disabled; only the
+            Ask button is ever disabled here, so keep the box itself normal. */}
+        <InputGroup className="h-12 rounded-full bg-card has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-input/30">
           <InputGroupAddon className="pl-4">
             <SearchIcon />
           </InputGroupAddon>
