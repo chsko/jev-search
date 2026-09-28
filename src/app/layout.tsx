@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import { Separator } from "@/components/ui/separator";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </a>
           </p>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
