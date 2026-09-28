@@ -45,6 +45,12 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   `src/lib/jev.ts`); code maps the most probable level onto any scale the user names.
 - Don't present a score's expected value as an exact magnitude between levels.
 
+## Deployment
+
+Quairy deploys to Vercel. Use the `vercel` plugin (enabled in `.claude/settings.json`) for
+Vercel and Next.js questions, deployments, env vars and logs; its MCP server needs a
+one-time Vercel login. Required env var: `TYPESAFE_API_KEY` (server only).
+
 ## Commands
 
 Use pnpm (never npm or yarn): `pnpm install`, `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`
