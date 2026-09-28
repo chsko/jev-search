@@ -50,6 +50,12 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   this" (below 0.35: "Your text doesn't say"; 0.35–0.7: partly) and a Choice over passage
   IDs for the evidence, following TypeSafe's line-by-line search cookbook. Answers use
   "only what `document` states or directly implies". Max text: 30,000 characters.
+- Compare (`/search/compare?q=…`, `src/lib/compare.ts`) follows TypeSafe's composite-scoring
+  pattern: one request with a Noul per quality in `QUALITIES` ("does it matter here?") and a
+  three-level Score per option × quality (at most 4 options). Jev selects qualities from the
+  library rather than inventing them; everything is scored up front, so sliders and "Add a
+  factor" re-rank in code (`rank`) with no new request. Expected scores rank options; the
+  bars are not shown as magnitudes.
 
 ## Deployment
 

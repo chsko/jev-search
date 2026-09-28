@@ -1,7 +1,10 @@
-import { FileSearchIcon, MessageCircleQuestionIcon } from "lucide-react";
+import Link from "next/link";
+import { FileSearchIcon, MessageCircleQuestionIcon, SlidersHorizontalIcon } from "lucide-react";
 import { ExampleQuestions } from "@/components/ExampleQuestions";
 import { RatingChart } from "@/components/RatingChart";
+import { NAV_FORWARD } from "@/components/Transitions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,6 +23,7 @@ import {
 } from "@/components/ui/empty";
 import { Progress } from "@/components/ui/progress";
 import { EXAMPLES } from "@/lib/examples";
+import { MAX_COMPARE_OPTIONS } from "@/lib/compare";
 import type { Grounding, Outcome, SupportedKind } from "@/lib/jev";
 import { cn } from "@/lib/utils";
 
@@ -172,10 +176,13 @@ export function Guidance({
 export function Answer({
   outcome,
   mode = "web",
+  compareHref,
 }: {
   outcome: Outcome;
   /** "text" when answering from a pasted text. */
   mode?: "web" | "text";
+  /** Where a pick-one answer can be compared in detail. */
+  compareHref?: string;
 }) {
   switch (outcome.kind) {
     case "unsupported":
@@ -215,6 +222,15 @@ export function Answer({
               <ProbabilityRow key={o.label} label={o.label} probability={o.probability} muted={o.none} />
             ))}
           </ul>
+          {compareHref &&
+            outcome.options.filter((o) => !o.none).length <= MAX_COMPARE_OPTIONS && (
+              <Button asChild variant="outline" size="sm" className="self-start rounded-full">
+                <Link href={compareHref} transitionTypes={[NAV_FORWARD]}>
+                  <SlidersHorizontalIcon data-icon="inline-start" />
+                  Compare on what matters to you
+                </Link>
+              </Button>
+            )}
         </AnswerCard>
       );
     case "rate": {

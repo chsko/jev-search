@@ -20,6 +20,12 @@ At `/text`, paste any text (up to 30,000 characters) and ask the same kinds of q
 Quairy answers only from that text, quotes the line the answer comes from, and says so
 when the text doesn't answer the question.
 
+### Compare on what matters to you
+
+Pick-one answers link to `/search/compare?q=…`: Quairy picks the factors that matter for the
+question from a fixed library, rates each option on every factor, and ranks the options by
+weights you set with sliders. Changing a weight re-ranks instantly without asking Jev again.
+
 ## How it works
 
 `/search?q=…` is a server-rendered page, so the API key stays on the server and
