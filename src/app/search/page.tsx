@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { APIError, TypeSafeError } from "@typesafe-ai/sdk";
 import { AlertCircleIcon } from "lucide-react";
+import { ViewTransition } from "react";
 import { Answer } from "@/components/Answer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getJevClient } from "@/lib/client";
@@ -49,10 +50,14 @@ export default async function SearchPage({ searchParams }: Props) {
     return <ErrorCard message={describeError(error)} />;
   }
   return (
-    <>
-      <h1 className="sr-only">Needle’s answer to “{q}”</h1>
-      <Answer outcome={outcome} />
-    </>
+    // Keyed by the query so each new answer rises in, including searches made
+    // from the results header.
+    <ViewTransition key={q} enter="reveal-in" default="none">
+      <div>
+        <h1 className="sr-only">Needle’s answer to “{q}”</h1>
+        <Answer outcome={outcome} />
+      </div>
+    </ViewTransition>
   );
 }
 

@@ -40,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
-        <footer className="flex flex-col">
+        <footer className="flex flex-col" style={{ viewTransitionName: "site-footer" }}>
           <Separator />
           <p className="px-4 py-4 text-center text-xs text-muted-foreground">
             Answers powered by Jev, a System One model from{" "}

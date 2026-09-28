@@ -7,7 +7,8 @@ import { QueryBox } from "./QueryBox";
 export default function SearchLayout({ children }: LayoutProps<"/search">) {
   return (
     <>
-      <header className="flex flex-col">
+      {/* Pinned during transitions, so only the content below it moves. */}
+      <header className="flex flex-col" style={{ viewTransitionName: "site-header" }}>
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-6">
           <Logo className="h-7" />
           <div className="flex-1">

@@ -95,3 +95,70 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* View transitions for searching. The logo and search box morph between the
+   home page and the results header; page content sinks out and rises in,
+   following the search box upwards; answers rise in when they arrive. */
+:root {
+  --vt-exit: 150ms;
+  --vt-enter: 210ms;
+  --vt-move: 400ms;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: var(--vt-move);
+  animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
+}
+::view-transition-image-pair(.morph) {
+  animation-name: vt-via-blur;
+}
+
+::view-transition-old(.page-out),
+::view-transition-old(.reveal-out) {
+  animation:
+    var(--vt-exit) ease-in both vt-fade reverse,
+    var(--vt-exit) ease-in both vt-sink;
+}
+::view-transition-new(.page-in),
+::view-transition-new(.reveal-in) {
+  animation:
+    var(--vt-enter) ease-out var(--vt-exit) both vt-fade,
+    var(--vt-move) cubic-bezier(0.2, 0, 0, 1) both vt-rise;
+}
+
+/* The header and footer stay put while content moves. */
+::view-transition-group(site-header),
+::view-transition-group(site-footer) {
+  animation: none;
+  z-index: 100;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-rise {
+  from {
+    transform: translateY(16px);
+  }
+}
+@keyframes vt-sink {
+  to {
+    transform: translateY(12px);
+  }
+}
+@keyframes vt-via-blur {
+  30% {
+    filter: blur(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

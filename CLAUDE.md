@@ -30,6 +30,11 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   judgment: where the needle lands). The favicon (`src/app/icon.svg`) is a dial whose
   pointer is that needle.
   Copy is sentence case.
+- Search uses React `<ViewTransition>` (follow `.claude/skills/vercel-react-view-transitions`):
+  the logo and search box morph between home and the results header (names `logo`,
+  `search-box`); pages rise in / sink out on `nav-forward` / `nav-back`
+  (`src/components/Transitions.tsx`); answers rise in when they load. CSS lives at the end
+  of `globals.css`, including the reduced-motion override.
 
 ## Jev integration notes
 
