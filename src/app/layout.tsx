@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Separator } from "@/components/ui/separator";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -51,6 +52,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </p>
         </footer>
         <Analytics />
+        {/* Real-user Core Web Vitals, reported to Vercel Speed Insights. */}
+        <SpeedInsights />
       </body>
     </html>
   );
