@@ -56,6 +56,10 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   library rather than inventing them; everything is scored up front, so sliders and "Add a
   factor" re-rank in code (`rank`) with no new request. Expected scores rank options; the
   bars are not shown as magnitudes.
+  Compare only trade-offs: `tradeoffQuestion()` (a Noul, also asked speculatively in web
+  pick-one searches) gates the button and the page; questions of fact ("largest planet")
+  get "Nothing to compare here". Never pad the suggested qualities with irrelevant ones;
+  fewer than two relevant qualities means "no factors".
 
 ## Deployment
 

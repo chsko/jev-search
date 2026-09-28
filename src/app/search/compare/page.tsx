@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ScaleIcon } from "lucide-react";
 import { ViewTransition } from "react";
 import { ErrorCard } from "@/components/ErrorCard";
+import { NAV_BACK } from "@/components/Transitions";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { getJevClient } from "@/lib/client";
-import { compare, compareSetup, type Comparison } from "@/lib/compare";
+import { compare, compareSetup, type CompareResult } from "@/lib/compare";
 import { describeError } from "@/lib/errors";
 import { MAX_QUERY_LENGTH } from "@/lib/jev";
 import { CompareView } from "./CompareView";
@@ -29,13 +41,26 @@ export default async function ComparePage({ searchParams }: Props) {
   const setup = compareSetup(q);
   if (!setup.ok) return <ErrorCard title="Nothing to compare" message={setup.reason} />;
 
-  let comparison: Comparison;
+  let result: CompareResult;
   try {
-    comparison = await compare(getJevClient(), q, setup.options);
+    result = await compare(getJevClient(), q, setup.options);
   } catch (error) {
     console.error("Jev comparison failed", error);
     return <ErrorCard message={describeError(error)} />;
   }
+  if (result.status !== "ready") {
+    return (
+      <NothingToWeigh
+        query={q}
+        message={
+          result.status === "factual"
+            ? "This question has one factual answer, so there’s nothing to weigh up. Comparing works for choices that depend on what you care about, like “Which laptop is best for students: MacBook Air or ThinkPad?”"
+            : "Quairy couldn’t find enough everyday factors that apply to these options, so a comparison wouldn’t say much."
+        }
+      />
+    );
+  }
+  const { comparison } = result;
   return (
     <ViewTransition key={q} enter="reveal-in" default="none">
       <div className="flex flex-col gap-6">
@@ -46,5 +71,26 @@ export default async function ComparePage({ searchParams }: Props) {
         <CompareView comparison={comparison} />
       </div>
     </ViewTransition>
+  );
+}
+
+function NothingToWeigh({ query, message }: { query: string; message: string }) {
+  return (
+    <Empty className="border">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <ScaleIcon />
+        </EmptyMedia>
+        <EmptyTitle>Nothing to compare here</EmptyTitle>
+        <EmptyDescription>{message}</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button asChild variant="outline" size="sm" className="rounded-full">
+          <Link href={`/search?${new URLSearchParams({ q: query })}`} transitionTypes={[NAV_BACK]}>
+            See the answer
+          </Link>
+        </Button>
+      </EmptyContent>
+    </Empty>
   );
 }

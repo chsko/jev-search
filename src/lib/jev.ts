@@ -11,6 +11,7 @@ import {
   type SystemOneResult,
 } from "@typesafe-ai/sdk";
 import { extractOptions, extractScale, type Scale } from "./parse";
+import { TRADEOFF, tradeoffQuestion } from "./compare";
 import { passageId, tagPassages } from "./passages";
 
 export const MAX_QUERY_LENGTH = 400;
@@ -121,6 +122,8 @@ export type Outcome =
       confidence: number;
       /** Listed options and "none of them", most probable first. */
       options: { label: string; probability: number; none: boolean }[];
+      /** A trade-off worth comparing on what matters to the asker (web searches only). */
+      comparable?: boolean;
     } & Grounded)
   | ({
       kind: "rate";
@@ -186,6 +189,8 @@ export function buildRequest(query: string, passages?: string[]) {
     if (!options.some((o) => o.toLowerCase() === NONE_OF_THESE.toLowerCase())) {
       criteria[NONE_OF_THESE] = null;
     }
+    // Speculative, for web searches: is this a trade-off worth comparing?
+    if (!passages) questions.tradeoff = tradeoffQuestion();
     questions.pick_one = choice(
       `Assume \`query\` asks which one of the listed alternatives is the answer. ${basis}, which alternative best answers \`query\`? Choose the none option only if no listed alternative is a reasonable answer.`,
       criteria,
@@ -279,9 +284,11 @@ export function interpret(
           none: label === NONE_OF_THESE,
         }))
         .sort((a, b) => b.probability - a.probability);
+      const tradeoff = answers.tradeoff;
       return {
         kind: "pick_one",
         classification,
+        comparable: isType(tradeoff, "noul") ? tradeoff.noul >= TRADEOFF : undefined,
         choice: answer.choice,
         confidence: answer.confidence,
         options,

@@ -81,6 +81,7 @@ describe("buildRequest", () => {
       "rate",
     ]);
     const { questions } = buildRequest("Which is bigger: Mars or Venus?").request;
+    expect(questions.tradeoff).toMatchObject({ type: "noul" });
     expect(questions.pick_one).toMatchObject({
       type: "choice",
       criteria: { Mars: null, Venus: null, [NONE_OF_THESE]: null },
@@ -128,13 +129,33 @@ describe("askJev", () => {
           confidence: 0.9,
           probabilities: { Mars: 0.04, Jupiter: 0.9, [NONE_OF_THESE]: 0.06 },
         },
+        tradeoff: { type: "noul", noul: 0.03 },
       }),
       "Which is the largest planet: Mars or Jupiter?",
     );
-    expect(outcome).toMatchObject({ kind: "pick_one", choice: "Jupiter" });
+    expect(outcome).toMatchObject({ kind: "pick_one", choice: "Jupiter", comparable: false });
     if (outcome.kind !== "pick_one") throw new Error("unreachable");
     expect(outcome.options.map((o) => o.label)).toEqual(["Jupiter", NONE_OF_THESE, "Mars"]);
     expect(outcome.options[1].none).toBe(true);
+  });
+
+  it("offers a comparison only for trade-offs", async () => {
+    const outcome = await askJev(
+      fakeClient({
+        kind: kind("pick_one"),
+        yes_no: noulYes,
+        rate,
+        pick_one: {
+          type: "choice",
+          choice: "Python",
+          confidence: 0.7,
+          probabilities: { Python: 0.7, Rust: 0.25, [NONE_OF_THESE]: 0.05 },
+        },
+        tradeoff: { type: "noul", noul: 0.92 },
+      }),
+      "Which is better for a beginner: Python or Rust?",
+    );
+    expect(outcome).toMatchObject({ kind: "pick_one", comparable: true });
   });
 
   it("answers ratings with the most probable level", async () => {

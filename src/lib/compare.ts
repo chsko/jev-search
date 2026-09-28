@@ -17,8 +17,11 @@ import { extractOptions } from "./parse";
 // or adding a quality never needs another request.
 
 export const MAX_COMPARE_OPTIONS = 4;
-export const MIN_SHOWN = 3;
 export const MAX_SHOWN = 6;
+/** Fewer relevant qualities than this and there is nothing worth weighing. */
+export const MIN_FACTORS = 2;
+/** A question is a trade-off, and worth comparing, from this probability. */
+export const TRADEOFF = 0.5;
 /** A quality is shown by default when Jev thinks it matters at least this much. */
 export const RELEVANT = 0.5;
 
@@ -68,6 +71,29 @@ export type Comparison = {
   suggested: string[];
 };
 
+export type CompareResult =
+  | { status: "ready"; comparison: Comparison }
+  /** The question has one factual answer, so there is nothing to weigh. */
+  | { status: "factual" }
+  /** None of the qualities, or just one, matter for this question. */
+  | { status: "no_factors" };
+
+/**
+ * Whether a pick-one question is a trade-off that depends on the asker's
+ * priorities ("Which laptop is best for students?") rather than a question of
+ * fact ("Which is the largest planet?"). Only trade-offs are worth comparing.
+ */
+export function tradeoffQuestion() {
+  return noul(
+    "Does `query` ask which option is best depending on what the asker needs or values, where several factors could be weighed against each other?",
+    {
+      true: "A choice that depends on priorities, such as which is better, best for a purpose, or worth it.",
+      false:
+        "A question of fact with one correct answer, such as which is largest, oldest, first, or located somewhere.",
+    },
+  );
+}
+
 export type CompareSetup =
   | { ok: true; options: string[] }
   | { ok: false; reason: string };
@@ -92,7 +118,7 @@ const scoreId = (option: number, quality: string) => `score_${option}_${quality}
 const relevanceId = (quality: string) => `matters_${quality}`;
 
 export function buildCompareRequest(query: string, options: string[]) {
-  const questions: Questions = {};
+  const questions: Questions = { tradeoff: tradeoffQuestion() };
   for (const q of QUALITIES) {
     questions[relevanceId(q.id)] = noul(
       `Is ${q.label.toLowerCase()} an important consideration when answering \`query\`?`,
@@ -122,7 +148,11 @@ function isType<T extends Question["type"]>(
 export function interpretCompare(
   options: string[],
   result: SystemOneResult<Questions>,
-): Comparison {
+): CompareResult {
+  const tradeoff = result.answers.tradeoff;
+  if (!isType(tradeoff, "noul")) throw new Error("Jev did not judge the question.");
+  if (tradeoff.noul < TRADEOFF) return { status: "factual" };
+
   const qualities: ComparedQuality[] = QUALITIES.map((q) => {
     const matters = result.answers[relevanceId(q.id)];
     if (!isType(matters, "noul")) throw new Error(`Jev did not judge ${q.id}.`);
@@ -139,12 +169,15 @@ export function interpretCompare(
     return { id: q.id, label: q.label, relevance: matters.noul, scores };
   });
 
-  const byRelevance = [...qualities].sort((a, b) => b.relevance - a.relevance);
-  const relevant = byRelevance.filter((q) => q.relevance >= RELEVANT).slice(0, MAX_SHOWN);
-  const suggested = (relevant.length >= MIN_SHOWN ? relevant : byRelevance.slice(0, MIN_SHOWN)).map(
-    (q) => q.id,
-  );
-  return { options, qualities, suggested };
+  // Only qualities Jev judged relevant: padding the list with the least
+  // irrelevant ones would ask people to weigh factors that don't apply.
+  const suggested = [...qualities]
+    .sort((a, b) => b.relevance - a.relevance)
+    .filter((q) => q.relevance >= RELEVANT)
+    .slice(0, MAX_SHOWN)
+    .map((q) => q.id);
+  if (suggested.length < MIN_FACTORS) return { status: "no_factors" };
+  return { status: "ready", comparison: { options, qualities, suggested } };
 }
 
 /** Each option's weighted position from 0 to 1, best first. Weights of 0 are ignored. */

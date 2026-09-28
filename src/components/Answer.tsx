@@ -223,6 +223,7 @@ export function Answer({
             ))}
           </ul>
           {compareHref &&
+            outcome.comparable &&
             outcome.options.filter((o) => !o.none).length <= MAX_COMPARE_OPTIONS && (
               <Button asChild variant="outline" size="sm" className="self-start rounded-full">
                 <Link href={compareHref} transitionTypes={[NAV_FORWARD]}>
