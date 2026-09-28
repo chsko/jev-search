@@ -14,8 +14,8 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Needle",
-  description: "Ask a yes/no, pick-one or rating question. Needle finds the answer and shows how sure it is.",
+  title: "Quairy",
+  description: "Ask a yes/no, pick-one or rating question. Quairy finds the answer and shows how sure it is.",
 };
 
 export const viewport: Viewport = {

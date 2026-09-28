@@ -54,7 +54,7 @@ function AnswerCard({
       </CardHeader>
       <CardContent>{children}</CardContent>
       <CardFooter className="flex-wrap gap-x-3 gap-y-2 text-xs text-muted-foreground">
-        <Badge variant="secondary" title="How sure Needle is about the kind of question">
+        <Badge variant="secondary" title="How sure Quairy is about the kind of question">
           Read as {KIND_LABEL[outcome.kind].toLowerCase()}, {pct(outcome.classification.confidence)}
         </Badge>
         Based on general knowledge, not a cited source.
@@ -90,10 +90,10 @@ export function Guidance({ reason }: { reason?: string }) {
         <EmptyMedia variant="icon">
           <MessageCircleQuestionIcon />
         </EmptyMedia>
-        <EmptyTitle>Needle can’t answer that yet</EmptyTitle>
+        <EmptyTitle>Quairy can’t answer that yet</EmptyTitle>
         <EmptyDescription>
-          {reason ?? "Needle answers three kinds of question. Rephrase yours as one of these:"}
-          {reason && " Needle answers three kinds of question:"}
+          {reason ?? "Quairy answers three kinds of question. Rephrase yours as one of these:"}
+          {reason && " Quairy answers three kinds of question:"}
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent className="max-w-xl items-stretch gap-6 text-left">
@@ -128,8 +128,8 @@ export function Answer({ outcome }: { outcome: Outcome }) {
           answer={close ? "Too close to call" : answer}
           description={
             close
-              ? `Needle leans ${answer.toLowerCase()}, at ${pct(Math.max(yes, 1 - yes))}.`
-              : `Needle is ${pct(Math.max(yes, 1 - yes))} sure.`
+              ? `Quairy leans ${answer.toLowerCase()}, at ${pct(Math.max(yes, 1 - yes))}.`
+              : `Quairy is ${pct(Math.max(yes, 1 - yes))} sure.`
           }
         >
           <ul className="flex flex-col gap-3">
@@ -144,7 +144,7 @@ export function Answer({ outcome }: { outcome: Outcome }) {
         <AnswerCard
           outcome={outcome}
           answer={outcome.choice}
-          description={`Needle is ${pct(outcome.confidence)} confident in this pick.`}
+          description={`Quairy is ${pct(outcome.confidence)} confident in this pick.`}
         >
           <ul className="flex flex-col gap-3">
             {outcome.options.map((o) => (

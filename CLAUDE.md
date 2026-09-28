@@ -1,8 +1,9 @@
 # CLAUDE.md
 
-The product is **Needle**, a search engine whose answers come from TypeSafe's Jev model.
+The product is **Quairy** (query + AI, and the quarry you hunt), a search engine whose
+answers come from TypeSafe's Jev model.
 Don't brand the product with "Jev" (it is TypeSafe's model name); UI copy speaks as
-Needle and only the footer credits Jev.
+Quairy and only the footer credits Jev.
 
 @AGENTS.md
 
@@ -26,9 +27,9 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
 - Theme tokens live in `src/app/globals.css`: violet `--primary` is the only accent.
   Dark mode follows the system setting (Tailwind's media-query `dark` variant).
 - The logo (`src/components/Logo.tsx`) is Bricolage Grotesque ExtraBold outlines of
-  "needle" with the "l" drawn as a violet sewing needle (search: a needle in a haystack;
-  judgment: where the needle lands). The favicon (`src/app/icon.svg`) is a dial whose
-  pointer is that needle.
+  "quairy" with the "ai" in the accent colour (`fill-primary`). The favicon
+  (`src/app/icon.svg`) is a white "q" on an accent tile; its colour is hard-coded, so
+  regenerate it when the accent changes.
   Copy is sentence case.
 - Search uses React `<ViewTransition>` (follow `.claude/skills/vercel-react-view-transitions`):
   the logo and search box morph between home and the results header (names `logo`,

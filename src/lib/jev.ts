@@ -212,7 +212,7 @@ export function interpret(
           kind: "unsupported",
           classification,
           reason:
-            "It looks like you want Needle to pick between alternatives, but it couldn't find at least two listed after a colon.",
+            "It looks like you want Quairy to pick between alternatives, but it couldn't find at least two listed after a colon.",
         };
       }
       const options = Object.entries(answer.probabilities)

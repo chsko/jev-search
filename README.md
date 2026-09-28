@@ -1,10 +1,10 @@
-# Needle
+# Quairy
 
 A search engine that answers questions instead of listing links, powered by
 [Jev](https://typesafe.ai), TypeSafe's System One model. Built with Next.js (App Router), TypeScript, Tailwind CSS and
 [shadcn/ui](https://ui.shadcn.com), deployed on Vercel.
 
-Needle answers three kinds of question:
+Quairy answers three kinds of question:
 
 | Kind | Example | Answer shown |
 | --- | --- | --- |

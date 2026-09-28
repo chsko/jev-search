@@ -63,7 +63,7 @@ export function SearchBox({
             title="Type a question"
             autoFocus={autoFocus}
             autoComplete="off"
-            aria-label="Ask Needle a question"
+            aria-label="Ask Quairy a question"
             placeholder="Ask a question…"
             className="text-base"
           />
