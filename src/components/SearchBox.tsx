@@ -1,6 +1,6 @@
 "use client";
 
-import { ViewTransition, type FormEvent } from "react";
+import { useState, useSyncExternalStore, ViewTransition, type FormEvent } from "react";
 import Form from "next/form";
 import { useRouter } from "next/navigation";
 import { SearchIcon } from "lucide-react";
@@ -23,6 +23,15 @@ export function SearchBox({
   transitionType?: string;
 }) {
   const router = useRouter();
+  const [value, setValue] = useState(defaultValue ?? "");
+  // Only disable Ask once the page is interactive, so the form still works
+  // before (or without) JavaScript; the input's pattern covers that case.
+  const hydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
+  const empty = value.trim() === "";
 
   // Navigate ourselves to attach the transition type. Without JavaScript the
   // form still submits as a normal GET to /search.
@@ -49,6 +58,9 @@ export function SearchBox({
             required
             maxLength={MAX_QUERY_LENGTH}
             defaultValue={defaultValue}
+            onChange={(event) => setValue(event.currentTarget.value)}
+            pattern=".*\S.*"
+            title="Type a question"
             autoFocus={autoFocus}
             autoComplete="off"
             aria-label="Ask Needle a question"
@@ -56,7 +68,13 @@ export function SearchBox({
             className="text-base"
           />
           <InputGroupAddon align="inline-end" className="pr-1.5">
-            <InputGroupButton type="submit" variant="default" size="sm" className="rounded-full px-4">
+            <InputGroupButton
+            type="submit"
+            variant="default"
+            size="sm"
+            disabled={hydrated && empty}
+            className="rounded-full px-4"
+          >
               Ask
             </InputGroupButton>
           </InputGroupAddon>
@@ -64,4 +82,8 @@ export function SearchBox({
       </ViewTransition>
     </Form>
   );
+}
+
+function subscribeNoop() {
+  return () => {};
 }
