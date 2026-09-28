@@ -108,7 +108,7 @@ function ProbabilityRow({
   muted?: boolean;
 }) {
   return (
-    <li className="grid grid-cols-[minmax(0,14rem)_1fr_3rem] items-center gap-3 text-sm">
+    <li className="grid grid-cols-[minmax(0,9rem)_1fr_3.5rem] sm:grid-cols-[minmax(0,14rem)_1fr_3.5rem] items-center gap-3 text-sm">
       <span className={cn("truncate", muted && "text-muted-foreground italic")} title={label}>
         {label}
       </span>

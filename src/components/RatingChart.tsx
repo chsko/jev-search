@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Bar, BarChart, XAxis } from "recharts";
+import { pct } from "@/lib/summary";
 import {
   ChartContainer,
   ChartTooltip,
@@ -35,7 +36,7 @@ export function RatingChart({
   const reducedMotion = usePrefersReducedMotion();
   const data = distribution.map((d) => ({
     level: d.label,
-    probability: Math.round(d.probability * 100),
+    probability: d.probability * 100,
   }));
   return (
     <ChartContainer config={config} className="aspect-auto h-40 w-full">
@@ -43,7 +44,7 @@ export function RatingChart({
         <XAxis dataKey="level" tickLine={false} axisLine={false} tickMargin={8} />
         <ChartTooltip
           cursor={false}
-          content={<ChartTooltipContent hideIndicator formatter={(v) => `${v}% likely`} />}
+          content={<ChartTooltipContent hideIndicator formatter={(v) => `${pct(Number(v) / 100)} likely`} />}
         />
         <Bar dataKey="probability" fill="var(--color-probability)" radius={6} isAnimationActive={!reducedMotion} />
       </BarChart>

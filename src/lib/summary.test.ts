@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Classification, Outcome } from "./jev";
-import { summarize } from "./summary";
+import { pct, summarize } from "./summary";
 
 const classification = (kind: Classification["kind"]): Classification => ({
   kind,
@@ -47,5 +47,19 @@ describe("summarize", () => {
 
   it("has nothing to share for unsupported questions", () => {
     expect(summarize({ kind: "unsupported", classification: classification("unsupported") })).toBeNull();
+  });
+});
+
+describe("pct", () => {
+  it("rounds to whole percentages", () => {
+    expect(pct(0.92)).toBe("92%");
+    expect(pct(0.99)).toBe("99%");
+    expect(pct(0.01)).toBe("1%");
+  });
+
+  it("never claims certainty", () => {
+    expect(pct(1)).toBe(">99%");
+    expect(pct(0.996)).toBe(">99%");
+    expect(pct(0)).toBe("<1%");
   });
 });

@@ -1,7 +1,17 @@
 import type { Outcome, SupportedKind } from "./jev";
 
 const percent = new Intl.NumberFormat("en", { style: "percent", maximumFractionDigits: 0 });
-export const pct = (p: number) => percent.format(p);
+
+/**
+ * A probability as a whole percentage, never claiming certainty. Jev reports
+ * probabilities to two decimals, so a 1 means at least 99.5%: ">99%", not "100%".
+ */
+export function pct(p: number) {
+  const text = percent.format(p);
+  if (text === "100%") return ">99%";
+  if (text === "0%") return "<1%";
+  return text;
+}
 
 export const KIND_LABEL: Record<SupportedKind, string> = {
   yes_no: "Yes or no",
