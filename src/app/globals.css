@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@clerk/ui/themes/shadcn.css";
 
 /* shadcn/ui tokens: the Quarry palette. Cool slate neutrals let a single
    ochre accent, --primary, carry the brand (the "ai" in the logo, the Ask

@@ -1,2 +1,5 @@
 allowBuilds:
+  bufferutil: false
+  core-js: false
   unrs-resolver: true
+  utf-8-validate: false

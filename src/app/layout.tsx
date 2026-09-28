@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import { shadcn } from "@clerk/ui/themes";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Separator } from "@/components/ui/separator";
@@ -41,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${instrumentSans.variable} ${bricolage.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        <ClerkProvider appearance={{ theme: shadcn }}>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
@@ -60,6 +63,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Analytics />
         {/* Real-user Core Web Vitals, reported to Vercel Speed Insights. */}
         <SpeedInsights />
+        </ClerkProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
+import { checkBurst } from "@/lib/quota";
 import { search } from "@/lib/search";
 import { KIND_LABEL, summarize, type Summary } from "@/lib/summary";
 import { WORDMARK } from "@/lib/wordmark";
@@ -191,8 +192,11 @@ function AnswerCard({
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   const options = { ...SIZE, fonts: await fonts };
+  // A brief cache, so a passing outage or throttle doesn't stick to the link's preview.
+  const brief = { ...options, headers: { "Cache-Control": "public, max-age=60, s-maxage=60" } };
 
   if (q && q.length <= MAX_QUERY_LENGTH) {
+    if (!(await checkBurst())) return new ImageResponse(<BrandCard />, brief);
     try {
       const outcome = await search(q);
       const summary = summarize(outcome);
@@ -204,11 +208,7 @@ export async function GET(request: NextRequest) {
       }
     } catch (error) {
       console.error("Jev request failed for a share card", error);
-      // A brief cache, so a passing outage doesn't stick to the link's preview.
-      return new ImageResponse(<BrandCard />, {
-        ...options,
-        headers: { "Cache-Control": "public, max-age=60, s-maxage=60" },
-      });
+      return new ImageResponse(<BrandCard />, brief);
     }
   }
   return new ImageResponse(<BrandCard />, { ...options, headers: { "Cache-Control": CACHED } });

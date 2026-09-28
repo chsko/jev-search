@@ -4,6 +4,7 @@ import { getJevClient } from "@/lib/client";
 import { describeError } from "@/lib/errors";
 import { askJev, MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
 import { MAX_TEXT_LENGTH, toPassages } from "@/lib/passages";
+import { checkBurst } from "@/lib/quota";
 
 export type TextAskState =
   | { status: "idle" }
@@ -34,6 +35,10 @@ export async function askAboutText(
       id,
       message: `Please keep questions under ${MAX_QUERY_LENGTH} characters.`,
     };
+  }
+
+  if (!(await checkBurst())) {
+    return { status: "error", id, message: "That’s a lot of questions at once. Wait a minute, then try again." };
   }
 
   try {

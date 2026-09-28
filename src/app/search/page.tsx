@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { ViewTransition } from "react";
 import { Answer } from "@/components/Answer";
 import { ErrorCard } from "@/components/ErrorCard";
+import { FreeSearchesLeft, SearchLimit, SlowDown } from "@/components/Limits";
 import { describeError } from "@/lib/errors";
 import { MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
+import { checkSearch } from "@/lib/quota";
 import { search } from "@/lib/search";
 import { SITE_DESCRIPTION } from "@/lib/site";
 import { summarize } from "@/lib/summary";
@@ -25,6 +27,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   // A page’s Open Graph fields replace the layout’s, so fall back explicitly.
   let description = SITE_DESCRIPTION;
   try {
+    // Over the limit, the preview must not carry the answer either.
+    if ((await checkSearch(q)).status !== "ok") throw new Error("Not allowed");
     const summary = summarize(await search(q));
     if (summary) description = `${summary.answer}. ${summary.detail}`;
   } catch {
@@ -48,6 +52,10 @@ export default async function SearchPage({ searchParams }: Props) {
     return <ErrorCard message={`Please keep questions under ${MAX_QUERY_LENGTH} characters.`} />;
   }
 
+  const access = await checkSearch(q);
+  if (access.status === "limit") return <SearchLimit limit={access.limit} />;
+  if (access.status === "slow_down") return <SlowDown />;
+
   let outcome: Outcome;
   try {
     outcome = await search(q);
@@ -65,6 +73,9 @@ export default async function SearchPage({ searchParams }: Props) {
           outcome={outcome}
           compareHref={`/search/compare?${new URLSearchParams({ q })}`}
         />
+        {access.remaining !== undefined && access.remaining <= 3 && (
+          <FreeSearchesLeft remaining={access.remaining} />
+        )}
       </div>
     </ViewTransition>
   );

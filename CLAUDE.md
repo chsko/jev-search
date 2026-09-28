@@ -69,6 +69,23 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   share card. Satori can't read CSS variables, so the card spells out the light Quarry palette in
   hex; update it when the palette changes. Answers about a pasted text have no Share button.
 
+## Free and Pro
+
+- Free: `FREE_DAILY_SEARCHES` (10) distinct web searches a day (UTC), counted in Upstash Redis
+  per Clerk user or, signed out, per IP (`checkSearch` in `src/lib/quota.ts`, React `cache`d so
+  page and metadata count once; repeats of a question are free; link-preview bots aren't
+  counted). Over the limit, metadata must not carry the answer. Text and Compare aren't counted.
+  Every Jev entry point (search, `/card`, `/text`, Compare) passes `checkBurst` (30/min per IP).
+- Pro (`src/lib/pricing.ts`, €4/month): unlimited searches and search history (Redis sorted set
+  per user). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
+  is found or created by lookup key. `syncSubscription` copies the latest subscription into
+  Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs
+  `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it.
+- Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root
+  layout). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.
+- Integrations are provisioned through the Vercel Marketplace (Clerk, Stripe, Upstash); env vars
+  come from `vercel env pull`. Production Clerk needs DNS records for the domain.
+
 ## Deployment
 
 Quairy deploys to Vercel. Use the `vercel` plugin (enabled in `.claude/settings.json`) for

@@ -11,7 +11,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.9.7",
+    "@clerk/ui": "^1.36.0",
     "@typesafe-ai/sdk": "^0.6.0",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "class-variance-authority": "^0.7.1",
@@ -25,6 +29,7 @@
     "recharts": "3.8.0",
     "server-only": "^0.0.1",
     "shadcn": "^4.21.0",
+    "stripe": "^22.6.2",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {

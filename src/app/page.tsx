@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FileTextIcon } from "lucide-react";
+import { Account } from "@/components/Account";
 import { ExampleQuestions } from "@/components/ExampleQuestions";
 import { Logo } from "@/components/Logo";
 import { SearchBox } from "@/components/SearchBox";
@@ -10,7 +11,10 @@ import { EXAMPLES } from "@/lib/examples";
 export default function Home() {
   return (
     <PageTransition>
-      <main id="main" className="flex flex-1 flex-col items-center px-4 pt-[16vh] pb-16">
+      <div className="flex justify-end px-4 py-4">
+        <Account />
+      </div>
+      <main id="main" className="flex flex-1 flex-col items-center px-4 pt-[10vh] pb-16">
         <h1 className="sr-only">Quairy</h1>
         <Logo className="h-16 sm:h-24" />
         <p className="mt-5 max-w-md text-center text-balance text-muted-foreground">
