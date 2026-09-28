@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useState, ViewTransition } from "react";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,13 @@ export function CompareView({ comparison }: { comparison: Comparison }) {
     setWeights((w) => ({ ...w, [id]: value }));
   }
 
+  function removeQuality(id: string) {
+    const next = Object.fromEntries(Object.entries(weights).filter(([q]) => q !== id));
+    setShown((s) => s.filter((q) => q !== id));
+    setWeights(next);
+    commit(next);
+  }
+
   function addQuality(id: string) {
     const next = { ...weights, [id]: DEFAULT_WEIGHT };
     setShown((s) => [...s, id]);
@@ -92,7 +99,7 @@ export function CompareView({ comparison }: { comparison: Comparison }) {
         <CardHeader>
           <CardTitle className="font-heading text-lg">What matters to you</CardTitle>
           <CardDescription>
-            Quairy picked the factors that matter most here. Change how much each one counts.
+            Quairy picked the factors that matter most here. Change how much each one counts, or remove it.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -101,11 +108,23 @@ export function CompareView({ comparison }: { comparison: Comparison }) {
             const weight = weights[id] ?? 0;
             return (
               <div key={id} className="flex flex-col gap-3">
-                <div className="flex items-baseline justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                   <span id={`label-${id}`} className="font-medium">
                     {q.label}
                   </span>
-                  <span className="text-sm text-muted-foreground">{WEIGHT_LABELS[weight]}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">{WEIGHT_LABELS[weight]}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Remove ${q.label.toLowerCase()}`}
+                      title="Remove factor"
+                      onClick={() => removeQuality(id)}
+                    >
+                      <XIcon />
+                    </Button>
+                  </div>
                 </div>
                 <Slider
                   aria-labelledby={`label-${id}`}
