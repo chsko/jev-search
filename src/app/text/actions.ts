@@ -4,12 +4,14 @@ import { getJevClient } from "@/lib/client";
 import { describeError } from "@/lib/errors";
 import { askJev, MAX_QUERY_LENGTH, type Outcome } from "@/lib/jev";
 import { MAX_TEXT_LENGTH, toPassages } from "@/lib/passages";
-import { checkBurst } from "@/lib/quota";
+import { checkExtra } from "@/lib/quota";
 
 export type TextAskState =
   | { status: "idle" }
   | { status: "answered"; id: number; outcome: Outcome }
-  | { status: "error"; id: number; message: string };
+  | { status: "error"; id: number; message: string }
+  /** A free visitor has used today's comparisons and text questions. */
+  | { status: "limit"; id: number; limit: number };
 
 /** Answers a question from a pasted text only, with the passage that answers it. */
 export async function askAboutText(
@@ -37,9 +39,11 @@ export async function askAboutText(
     };
   }
 
-  if (!(await checkBurst())) {
+  const access = await checkExtra("text", question, text);
+  if (access.status === "slow_down") {
     return { status: "error", id, message: "That’s a lot of questions at once. Wait a minute, then try again." };
   }
+  if (access.status === "limit") return { status: "limit", id, limit: access.limit };
 
   try {
     const outcome = await askJev(getJevClient(), question, toPassages(text));

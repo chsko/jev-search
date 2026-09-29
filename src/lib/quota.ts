@@ -6,12 +6,12 @@ import { userAgent } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { getSubscription, isPro } from "./billing";
-import { FREE_DAILY_SEARCHES, HISTORY_SIZE } from "./pricing";
+import { FREE_DAILY_EXTRAS, FREE_DAILY_SEARCHES, HISTORY_SIZE } from "./pricing";
 import { getRedis } from "./redis";
 
 export type Access =
   | { status: "ok"; plan: "pro" | "free" | "bot"; remaining?: number }
-  /** A free visitor has used today's searches. */
+  /** A free visitor has used today's allowance. */
   | { status: "limit"; limit: number }
   /** Too many requests in a short time, from anyone. */
   | { status: "slow_down" };
@@ -45,16 +45,47 @@ export async function checkBurst(): Promise<boolean> {
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
-const questionId = (q: string) =>
-  createHash("sha256").update(q.trim().toLowerCase()).digest("base64url").slice(0, 16);
+const hashId = (...parts: string[]) =>
+  createHash("sha256")
+    .update(parts.map((p) => p.trim().toLowerCase()).join("\u0000"))
+    .digest("base64url")
+    .slice(0, 16);
 const historyKey = (userId: string) => `history:${userId}`;
 
+type Allowance = {
+  /** Redis key prefix, one set of request ids per visitor per day. */
+  prefix: string;
+  limit: number;
+};
+
+const SEARCHES: Allowance = { prefix: "quota", limit: FREE_DAILY_SEARCHES };
+const EXTRAS: Allowance = { prefix: "extras", limit: FREE_DAILY_EXTRAS };
+
 /**
- * Whether this request may answer `q`, counting it against a free visitor's
- * daily allowance. Cached per request, so the page and its metadata count one
- * search. Free visitors are counted by account when signed in and by IP
- * otherwise; each distinct question counts once a day, so reloading or going
- * back to an answer is free. Link-preview bots aren't counted.
+ * Counts one request against a free visitor's daily allowance. Visitors are
+ * counted by account when signed in and by IP otherwise; each distinct request
+ * id counts once a day, so reloading or repeating it is free.
+ */
+async function useAllowance(
+  userId: string | null,
+  { prefix, limit }: Allowance,
+  id: string,
+): Promise<Access> {
+  const redis = getRedis();
+  const key = `${prefix}:${userId ? `user:${userId}` : `ip:${await clientIp()}`}:${today()}`;
+  const [seen, used] = await Promise.all([redis.sismember(key, id), redis.scard(key)]);
+  // Already counted today, so it says nothing new about what's left.
+  if (seen) return { status: "ok", plan: "free" };
+  if (used >= limit) return { status: "limit", limit };
+  await redis.pipeline().sadd(key, id).expire(key, 60 * 60 * 48).exec();
+  return { status: "ok", plan: "free", remaining: limit - used - 1 };
+}
+
+/**
+ * Whether this request may answer the search `q`, counting it against a free
+ * visitor's daily searches. Cached per request, so the page and its metadata
+ * count one search. Pro searches are added to the history; link-preview bots
+ * aren't counted.
  */
 export const checkSearch = cache(async (q: string): Promise<Access> => {
   if (!(await checkBurst())) return { status: "slow_down" };
@@ -70,18 +101,27 @@ export const checkSearch = cache(async (q: string): Promise<Access> => {
         .exec();
       return { status: "ok", plan: "pro" };
     }
-
-    const redis = getRedis();
-    const key = `quota:${userId ? `user:${userId}` : `ip:${await clientIp()}`}:${today()}`;
-    const id = questionId(q);
-    const [seen, used] = await Promise.all([redis.sismember(key, id), redis.scard(key)]);
-    // Already counted today, so it says nothing new about what's left.
-    if (seen) return { status: "ok", plan: "free" };
-    if (used >= FREE_DAILY_SEARCHES) return { status: "limit", limit: FREE_DAILY_SEARCHES };
-    await redis.pipeline().sadd(key, id).expire(key, 60 * 60 * 48).exec();
-    return { status: "ok", plan: "free", remaining: FREE_DAILY_SEARCHES - used - 1 };
+    return await useAllowance(userId, SEARCHES, hashId(q));
   } catch (error) {
     // Better to answer than to lock everyone out when Redis is unreachable.
+    console.error("Quota check failed", error);
+    return { status: "ok", plan: "free" };
+  }
+});
+
+/**
+ * Whether this request may run a comparison or answer a question about a
+ * pasted text: the costlier requests, which share their own small daily
+ * allowance. `parts` identify the request (the question, and the text), so
+ * repeating it is free. Unlimited with Pro.
+ */
+export const checkExtra = cache(async (...parts: string[]): Promise<Access> => {
+  if (!(await checkBurst())) return { status: "slow_down" };
+  try {
+    const { userId } = await auth();
+    if (userId && isPro(await getSubscription(userId))) return { status: "ok", plan: "pro" };
+    return await useAllowance(userId, EXTRAS, hashId(...parts));
+  } catch (error) {
     console.error("Quota check failed", error);
     return { status: "ok", plan: "free" };
   }

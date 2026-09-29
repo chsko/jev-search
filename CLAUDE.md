@@ -74,9 +74,11 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
 - Free: `FREE_DAILY_SEARCHES` (10) distinct web searches a day (UTC), counted in Upstash Redis
   per Clerk user or, signed out, per IP (`checkSearch` in `src/lib/quota.ts`, React `cache`d so
   page and metadata count once; repeats of a question are free; link-preview bots aren't
-  counted). Over the limit, metadata must not carry the answer. Text and Compare aren't counted.
+  counted). Over the limit, metadata must not carry the answer. Compare and "Ask about a text"
+  cost up to 10x a search, so they share their own allowance, `FREE_DAILY_EXTRAS` (3) a day
+  (`checkExtra`; repeating the same comparison or question on the same text is free).
   Every Jev entry point (search, `/card`, `/text`, Compare) passes `checkBurst` (30/min per IP).
-- Pro (`src/lib/pricing.ts`, €4/month): unlimited searches and search history (Redis sorted set
+- Pro (`src/lib/pricing.ts`, €4/month): unlimited searches, comparisons and text questions, and search history (Redis sorted set
   per user). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
   is found or created by lookup key. `syncSubscription` copies the latest subscription into
   Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs

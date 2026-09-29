@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ScaleIcon } from "lucide-react";
 import { ViewTransition } from "react";
 import { ErrorCard } from "@/components/ErrorCard";
-import { SlowDown } from "@/components/Limits";
+import { ExtrasLimit, SlowDown } from "@/components/Limits";
 import { NAV_BACK } from "@/components/Transitions";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,7 @@ import { getJevClient } from "@/lib/client";
 import { compare, compareSetup, type CompareResult } from "@/lib/compare";
 import { describeError } from "@/lib/errors";
 import { MAX_QUERY_LENGTH } from "@/lib/jev";
-import { checkBurst } from "@/lib/quota";
+import { checkExtra } from "@/lib/quota";
 import { CompareView } from "./CompareView";
 
 type Props = PageProps<"/search/compare">;
@@ -43,7 +43,9 @@ export default async function ComparePage({ searchParams }: Props) {
   const setup = compareSetup(q);
   if (!setup.ok) return <ErrorCard title="Nothing to compare" message={setup.reason} />;
 
-  if (!(await checkBurst())) return <SlowDown />;
+  const access = await checkExtra("compare", q);
+  if (access.status === "slow_down") return <SlowDown />;
+  if (access.status === "limit") return <ExtrasLimit limit={access.limit} />;
 
   let result: CompareResult;
   try {

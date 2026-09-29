@@ -16,30 +16,46 @@ function UpgradeButton() {
     <Button asChild className="rounded-full">
       <Link href="/pro">
         <SparklesIcon data-icon="inline-start" />
-        Get unlimited searches for {PRO_PRICE_LABEL}
+        Go unlimited with Pro for {PRO_PRICE_LABEL}
       </Link>
     </Button>
   );
 }
 
-/** Shown instead of an answer once a free visitor has used today's searches. */
-export function SearchLimit({ limit }: { limit: number }) {
+function LimitCard({ title, description }: { title: string; description: string }) {
   return (
     <Empty className="border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <HourglassIcon />
         </EmptyMedia>
-        <EmptyTitle>You’ve used today’s {limit} free searches</EmptyTitle>
-        <EmptyDescription>
-          New free searches arrive at midnight UTC. Questions you already asked today still work.
-          Quairy Pro has no daily limit and keeps your search history.
-        </EmptyDescription>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <UpgradeButton />
       </EmptyContent>
     </Empty>
+  );
+}
+
+/** Shown instead of an answer once a free visitor has used today's searches. */
+export function SearchLimit({ limit }: { limit: number }) {
+  return (
+    <LimitCard
+      title={`You’ve used today’s ${limit} free searches`}
+      description="New free searches arrive at midnight UTC. Questions you already asked today still work. Quairy Pro has no daily limit and keeps your search history."
+    />
+  );
+}
+
+/** Shown instead of a comparison or a text answer once today's free ones are used. */
+export function ExtrasLimit({ limit }: { limit: number }) {
+  return (
+    <LimitCard
+      title={`You’ve used today’s ${limit} free comparisons and text questions`}
+      description="They share one daily allowance, which renews at midnight UTC. Ones you already ran today still work, and searches aren’t affected. Quairy Pro has no daily limits."
+    />
   );
 }
 

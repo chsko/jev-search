@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FREE_DAILY_SEARCHES, PRO_MONTHLY_EUR } from "@/lib/pricing";
+import { FREE_DAILY_EXTRAS, FREE_DAILY_SEARCHES, PRO_MONTHLY_EUR } from "@/lib/pricing";
 
 function Perks({ items }: { items: string[] }) {
   return (
@@ -48,8 +48,7 @@ export function Plans({ badge, footer }: { badge?: React.ReactNode; footer: Reac
             <Perks
               items={[
                 `${FREE_DAILY_SEARCHES} searches a day`,
-                "Ask about a text you paste",
-                "Compare on what matters to you",
+                `${FREE_DAILY_EXTRAS} comparisons or text questions a day`,
                 "No account needed",
               ]}
             />
@@ -72,8 +71,8 @@ export function Plans({ badge, footer }: { badge?: React.ReactNode; footer: Reac
             <Perks
               items={[
                 "Unlimited searches",
+                "Unlimited comparisons and text questions",
                 "Search history",
-                "Everything in Free",
                 "Cancel any time",
               ]}
             />

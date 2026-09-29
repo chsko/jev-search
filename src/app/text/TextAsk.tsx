@@ -3,6 +3,7 @@
 import { useActionState, useState, ViewTransition } from "react";
 import { AlertCircleIcon } from "lucide-react";
 import { Answer } from "@/components/Answer";
+import { ExtrasLimit } from "@/components/Limits";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -124,6 +125,8 @@ export function TextAsk() {
               <Answer outcome={state.outcome} mode="text" />
             </div>
           </ViewTransition>
+        ) : state.status === "limit" ? (
+          <ExtrasLimit limit={state.limit} />
         ) : state.status === "error" ? (
           <Alert variant="destructive">
             <AlertCircleIcon />
