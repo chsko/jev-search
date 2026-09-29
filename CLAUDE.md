@@ -33,8 +33,8 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   regenerate it when the accent changes.
   Copy is sentence case.
 - Search uses React `<ViewTransition>` (follow `.claude/skills/vercel-react-view-transitions`):
-  the logo and search box morph between home and the results header (names `logo`,
-  `search-box`); pages rise in / sink out on `nav-forward` / `nav-back`
+  the logo, search box and account buttons morph between pages (names `logo`,
+  `search-box`, `account`; render one `Account` per page, aligned to the `max-w-3xl` column); pages rise in / sink out on `nav-forward` / `nav-back`
   (`src/components/Transitions.tsx`); answers rise in when they load. CSS lives at the end
   of `globals.css`, including the reduced-motion override.
 

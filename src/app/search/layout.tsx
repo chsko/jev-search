@@ -10,21 +10,15 @@ export default function SearchLayout({ children }: LayoutProps<"/search">) {
     <>
       {/* Pinned during transitions, so only the content below it moves. */}
       <header className="flex flex-col" style={{ viewTransitionName: "site-header" }}>
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-6">
-          <div className="flex items-center justify-between gap-3">
-            <Logo className="h-7" />
-            <div className="sm:hidden">
-              <Account />
-            </div>
-          </div>
-          <div className="flex-1">
+        {/* On phones the search box wraps below the logo and account; from sm up, one row. */}
+        <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap sm:gap-6">
+          <Logo className="h-7" />
+          <div className="order-last w-full sm:order-none sm:w-auto sm:flex-1">
             <Suspense fallback={<SearchBox />}>
               <QueryBox />
             </Suspense>
           </div>
-          <div className="hidden sm:block">
-            <Account />
-          </div>
+          <Account className="ml-auto sm:ml-0" />
         </div>
         <Separator />
       </header>

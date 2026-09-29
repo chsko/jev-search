@@ -11,7 +11,8 @@ import { EXAMPLES } from "@/lib/examples";
 export default function Home() {
   return (
     <PageTransition>
-      <div className="flex justify-end px-4 py-4">
+      {/* Lined up with the header on other pages, so the account buttons stay put. */}
+      <div className="mx-auto flex w-full max-w-3xl justify-end px-4 py-4">
         <Account />
       </div>
       <main id="main" className="flex flex-1 flex-col items-center px-4 pt-[10vh] pb-16">
