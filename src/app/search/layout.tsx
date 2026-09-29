@@ -20,7 +20,8 @@ export default function SearchLayout({ children }: LayoutProps<"/search">) {
           </div>
           <Account className="ml-auto sm:ml-0" />
         </div>
-        <Separator />
+        {/* Its own transition name, so it fades when moving to pages without it. */}
+        <Separator style={{ viewTransitionName: "header-divider" }} />
       </header>
       <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">{children}</main>
     </>

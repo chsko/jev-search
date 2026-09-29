@@ -132,22 +132,24 @@
 
 /* The header and footer stay put while content moves. */
 ::view-transition-group(site-header),
-::view-transition-group(site-footer) {
+::view-transition-group(site-footer),
+::view-transition-group(header-divider) {
   animation: none;
   z-index: 100;
 }
-/* A header on both sides of a transition (a new search, an answer arriving)
-   is simply swapped, so it never blinks. Only a header that appears or
-   disappears fades: only the search header has a divider, so it fades out at
-   once and fades in after the logo and search box have landed in it. */
 ::view-transition-old(site-header),
-::view-transition-new(site-header) {
+::view-transition-new(site-header),
+::view-transition-old(header-divider),
+::view-transition-new(header-divider) {
   animation: none;
 }
-::view-transition-old(site-header):only-child {
+/* Only the search header has a divider. When it's on both sides (a new search,
+   an answer arriving) it stays put; when it appears or disappears it fades:
+   out at once, in only after the logo and search box have landed. */
+::view-transition-old(header-divider):only-child {
   animation: var(--vt-exit) ease-in both vt-fade reverse;
 }
-::view-transition-new(site-header):only-child {
+::view-transition-new(header-divider):only-child {
   animation: var(--vt-enter) ease-out var(--vt-move) both vt-fade;
 }
 
