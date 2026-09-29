@@ -82,7 +82,8 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs
   `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it.
 - Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root
-  layout). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.
+  layout; sign-in and sign-up live in-app at `/sign-in` and `/sign-up`, never Clerk's hosted pages,
+  so they keep the Quarry theme). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.
 - Integrations are provisioned through the Vercel Marketplace (Clerk, Stripe, Upstash); env vars
   come from `vercel env pull`. Production Clerk needs DNS records for the domain.
 

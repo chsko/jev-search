@@ -47,6 +47,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           // The shadcn theme fills inputs with --input, which in the Quarry palette is a
           // border shade; use the card colour so fields don't look disabled.
           appearance={{ theme: shadcn, variables: { colorInput: "var(--card)" } }}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
         >
         <a
           href="#main"

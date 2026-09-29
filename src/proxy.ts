@@ -2,7 +2,8 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 
 // Public-first: every page works signed out. Pages that need an account
 // (Pro checkout, history) check for one themselves and offer sign-in.
-export default clerkMiddleware();
+// Sign-in redirects go to Quairy's own themed pages, not Clerk's hosted ones.
+export default clerkMiddleware({ signInUrl: "/sign-in", signUpUrl: "/sign-up" });
 
 export const config = {
   matcher: [
