@@ -134,6 +134,14 @@
   animation: none;
   z-index: 100;
 }
+/* Only the search header has a divider, so it fades in and out rather than
+   popping when moving between search results and other pages. */
+::view-transition-old(site-header) {
+  animation: var(--vt-exit) ease-in both vt-fade reverse;
+}
+::view-transition-new(site-header) {
+  animation: var(--vt-enter) ease-out both vt-fade;
+}
 
 @keyframes vt-fade {
   from {
