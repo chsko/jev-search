@@ -10,10 +10,14 @@ async function origin() {
   return h.get("origin") ?? `https://${h.get("host")}`;
 }
 
-/** Sends a signed-in visitor to Stripe Checkout for Quairy Pro. */
+/**
+ * Sends a signed-in visitor to Stripe Checkout for Quairy Pro. Signed-out
+ * visitors most likely have no account yet, so they're sent to sign up
+ * (which links to sign-in) and come back here afterwards.
+ */
 export async function subscribe() {
-  const { userId, redirectToSignIn } = await auth();
-  if (!userId) return redirectToSignIn({ returnBackUrl: "/pro" });
+  const { userId } = await auth();
+  if (!userId) redirect(`/sign-up?${new URLSearchParams({ redirect_url: "/pro" })}`);
   const user = await currentUser();
   const url = await createCheckout({
     userId,

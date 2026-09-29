@@ -115,7 +115,7 @@ export default async function ProPage() {
               <>
                 <form action={subscribe}>
                   <Button type="submit" className="w-full rounded-full">
-                    {userId ? "Subscribe" : "Sign in to subscribe"}
+                    {userId ? "Subscribe" : "Sign up to subscribe"}
                   </Button>
                 </form>
                 <p className="text-center text-xs text-muted-foreground">
