@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,11 +44,21 @@ export default async function ProPage() {
           </>
         ) : (
           <>
-            <form action={subscribe}>
-              <Button type="submit" className="w-full rounded-full">
-                {userId ? "Subscribe" : "Sign up to subscribe"}
+            {userId ? (
+              <form action={subscribe}>
+                <Button type="submit" className="w-full rounded-full">
+                  Subscribe
+                </Button>
+              </form>
+            ) : (
+              // A plain link, so the (prefetched) sign-up page opens at once; it
+              // returns here afterwards to subscribe.
+              <Button asChild className="w-full rounded-full">
+                <Link href={`/sign-up?${new URLSearchParams({ redirect_url: "/pro" })}`}>
+                  Sign up to subscribe
+                </Link>
               </Button>
-            </form>
+            )}
             <p className="text-center text-xs text-muted-foreground">Paid securely with Stripe.</p>
           </>
         )
