@@ -43,7 +43,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${instrumentSans.variable} ${bricolage.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <ClerkProvider appearance={{ theme: shadcn }}>
+        <ClerkProvider
+          // The shadcn theme fills inputs with --input, which in the Quarry palette is a
+          // border shade; use the card colour so fields don't look disabled.
+          appearance={{ theme: shadcn, variables: { colorInput: "var(--card)" } }}
+        >
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
