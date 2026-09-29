@@ -110,6 +110,8 @@
 ::view-transition-group(.morph) {
   animation-duration: var(--vt-move);
   animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
+  /* Above the pinned header, so the logo and search box never pass under its divider. */
+  z-index: 101;
 }
 ::view-transition-image-pair(.morph) {
   animation-name: vt-via-blur;
@@ -134,13 +136,13 @@
   animation: none;
   z-index: 100;
 }
-/* Only the search header has a divider, so it fades in and out rather than
-   popping when moving between search results and other pages. */
+/* Only the search header has a divider, so it fades out at once and fades in
+   only after the logo and search box have landed in the header. */
 ::view-transition-old(site-header) {
   animation: var(--vt-exit) ease-in both vt-fade reverse;
 }
 ::view-transition-new(site-header) {
-  animation: var(--vt-enter) ease-out both vt-fade;
+  animation: var(--vt-enter) ease-out var(--vt-move) both vt-fade;
 }
 
 @keyframes vt-fade {
