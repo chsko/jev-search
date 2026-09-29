@@ -136,12 +136,18 @@
   animation: none;
   z-index: 100;
 }
-/* Only the search header has a divider, so it fades out at once and fades in
-   only after the logo and search box have landed in the header. */
-::view-transition-old(site-header) {
+/* A header on both sides of a transition (a new search, an answer arriving)
+   is simply swapped, so it never blinks. Only a header that appears or
+   disappears fades: only the search header has a divider, so it fades out at
+   once and fades in after the logo and search box have landed in it. */
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+}
+::view-transition-old(site-header):only-child {
   animation: var(--vt-exit) ease-in both vt-fade reverse;
 }
-::view-transition-new(site-header) {
+::view-transition-new(site-header):only-child {
   animation: var(--vt-enter) ease-out var(--vt-move) both vt-fade;
 }
 
