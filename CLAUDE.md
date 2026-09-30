@@ -96,6 +96,15 @@ Quairy deploys to Vercel. Use the `vercel` plugin (enabled in `.claude/settings.
 Vercel and Next.js questions, deployments, env vars and logs; its MCP server needs a
 one-time Vercel login. Required env var: `TYPESAFE_API_KEY` (server only).
 
+## Dependencies and CI
+
+`.github/workflows/ci.yml` runs lint, typecheck, test and build on every pull request and push
+to main, with no secrets (nothing that needs a key runs at build time; keep it that way).
+Dependabot (`.github/dependabot.yml`) proposes npm and Actions updates weekly, only once a
+version is 7 days old (`cooldown`); minor and patch updates are grouped.
+`dependabot-automerge.yml` squash-merges a Dependabot pull request after CI succeeds on its
+current head commit; one that fails stays open for a human.
+
 ## Commands
 
 Use pnpm (never npm or yarn): `pnpm install`, `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`

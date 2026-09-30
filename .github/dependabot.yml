@@ -1,0 +1,25 @@
+# Dependency updates. Each version must have been out for 7 days before
+# Dependabot proposes it, so a broken or malicious release has time to be
+# caught and pulled first. Passing updates merge themselves
+# (see workflows/dependabot-automerge.yml).
+version: 2
+updates:
+  - package-ecosystem: npm # Covers pnpm through pnpm-lock.yaml.
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    groups:
+      # One pull request for all minor and patch updates; majors stay separate,
+      # so a breaking one can't hold back the rest.
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
