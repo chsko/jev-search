@@ -1,6 +1,6 @@
 import "server-only";
 import Stripe from "stripe";
-import { PRO_MONTHLY_EUR } from "./pricing";
+import { type BillingInterval, PRO_MONTHLY_EUR, PRO_YEARLY_EUR } from "./pricing";
 import { getRedis } from "./redis";
 
 // Quairy Pro is a Stripe subscription. Redis keeps the mapping between Clerk
@@ -15,7 +15,10 @@ export function getStripe(): Stripe {
   return stripe;
 }
 
-const PRICE_LOOKUP_KEY = "quairy_pro_monthly_eur";
+const PRICES: Record<BillingInterval, { lookupKey: string; eur: number }> = {
+  month: { lookupKey: "quairy_pro_monthly_eur", eur: PRO_MONTHLY_EUR },
+  year: { lookupKey: "quairy_pro_yearly_eur", eur: PRO_YEARLY_EUR },
+};
 
 const customerKey = (userId: string) => `stripe:customer:${userId}`;
 const userKey = (customerId: string) => `stripe:user:${customerId}`;
@@ -26,6 +29,8 @@ export type Subscription = {
   /** Seconds since the epoch. */
   currentPeriodEnd: number | null;
   cancelAtPeriodEnd: boolean;
+  /** Billed monthly or yearly; missing on subscriptions synced before yearly plans. */
+  interval?: BillingInterval;
 };
 
 /** Statuses that keep Pro on. `past_due` gives a grace period while Stripe retries the card. */
@@ -39,17 +44,25 @@ export function isPro(subscription: Subscription | null) {
   return !!subscription && ACTIVE.includes(subscription.status);
 }
 
-/** The monthly Pro price, created in Stripe the first time it's needed. */
-async function getProPrice(): Promise<string> {
+/**
+ * The Pro price for a billing interval, created in Stripe the first time it's
+ * needed. Both prices belong to one "Quairy Pro" product.
+ */
+async function getProPrice(interval: BillingInterval): Promise<string> {
   const stripe = getStripe();
-  const { data } = await stripe.prices.list({ lookup_keys: [PRICE_LOOKUP_KEY], active: true });
-  if (data[0]) return data[0].id;
+  const lookupKeys = Object.values(PRICES).map((p) => p.lookupKey);
+  const { data } = await stripe.prices.list({ lookup_keys: lookupKeys, active: true });
+  const existing = data.find((p) => p.lookup_key === PRICES[interval].lookupKey);
+  if (existing) return existing.id;
+  const sibling = data[0];
   const price = await stripe.prices.create({
     currency: "eur",
-    unit_amount: PRO_MONTHLY_EUR * 100,
-    recurring: { interval: "month" },
-    lookup_key: PRICE_LOOKUP_KEY,
-    product_data: { name: "Quairy Pro" },
+    unit_amount: PRICES[interval].eur * 100,
+    recurring: { interval },
+    lookup_key: PRICES[interval].lookupKey,
+    ...(sibling
+      ? { product: typeof sibling.product === "string" ? sibling.product : sibling.product.id }
+      : { product_data: { name: "Quairy Pro" } }),
   });
   return price.id;
 }
@@ -79,12 +92,17 @@ export async function createCheckout({
   userId,
   email,
   origin,
+  interval,
 }: {
   userId: string;
   email?: string;
   origin: string;
+  interval: BillingInterval;
 }) {
-  const [customer, price] = await Promise.all([getOrCreateCustomer(userId, email), getProPrice()]);
+  const [customer, price] = await Promise.all([
+    getOrCreateCustomer(userId, email),
+    getProPrice(interval),
+  ]);
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer,
@@ -130,6 +148,7 @@ export async function syncSubscription(customerId: string) {
         status: latest.status,
         currentPeriodEnd: latest.items.data[0]?.current_period_end ?? null,
         cancelAtPeriodEnd: latest.cancel_at_period_end,
+        interval: latest.items.data[0]?.price.recurring?.interval === "year" ? "year" : "month",
       }
     : null;
   if (subscription) await getRedis().set(subscriptionKey(userId), subscription);

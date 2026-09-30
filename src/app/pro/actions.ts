@@ -15,7 +15,8 @@ async function origin() {
  * visitors most likely have no account yet, so they're sent to sign up
  * (which links to sign-in) and come back here afterwards.
  */
-export async function subscribe() {
+export async function subscribe(formData: FormData) {
+  const interval = formData.get("interval") === "year" ? "year" : "month";
   const { userId } = await auth();
   if (!userId) redirect(`/sign-up?${new URLSearchParams({ redirect_url: "/pro" })}`);
   const user = await currentUser();
@@ -23,6 +24,7 @@ export async function subscribe() {
     userId,
     email: user?.primaryEmailAddress?.emailAddress,
     origin: await origin(),
+    interval,
   });
   redirect(url);
 }

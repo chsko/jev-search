@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getSubscription, isPro, type Subscription } from "@/lib/billing";
 import { manageSubscription, subscribe } from "./actions";
-import { Plans } from "./Plans";
+import { Plans, SUBSCRIBE_FORM } from "./Plans";
 
 export const metadata: Metadata = { title: "Quairy Pro" };
 
@@ -30,6 +30,7 @@ export default async function ProPage() {
   return (
     <Plans
       badge={pro && <Badge>Your plan</Badge>}
+      period={pro ? (subscription!.interval ?? "month") : undefined}
       footer={
         pro ? (
           <>
@@ -45,7 +46,7 @@ export default async function ProPage() {
         ) : (
           <>
             {userId ? (
-              <form action={subscribe}>
+              <form id={SUBSCRIBE_FORM} action={subscribe}>
                 <Button type="submit" className="w-full rounded-full">
                   Subscribe
                 </Button>

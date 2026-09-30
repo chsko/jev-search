@@ -7,6 +7,12 @@ export const FREE_DAILY_SEARCHES = 10;
 export const FREE_DAILY_EXTRAS = 3;
 /** Quairy Pro, per month, in euros. */
 export const PRO_MONTHLY_EUR = 4;
+/** Quairy Pro, per year, in euros. */
+export const PRO_YEARLY_EUR = 30;
 export const PRO_PRICE_LABEL = `€${PRO_MONTHLY_EUR}/month`;
+/** How much the yearly plan saves over twelve months, as a whole percentage. */
+export const YEARLY_SAVING_PERCENT = Math.round((1 - PRO_YEARLY_EUR / (PRO_MONTHLY_EUR * 12)) * 100);
+
+export type BillingInterval = "month" | "year";
 /** Searches a subscriber's history keeps. */
 export const HISTORY_SIZE = 200;
