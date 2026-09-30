@@ -28,7 +28,10 @@ export type Subscription = {
   status: Stripe.Subscription.Status;
   /** Seconds since the epoch. */
   currentPeriodEnd: number | null;
+  /** Set to end rather than renew, however Stripe recorded it. */
   cancelAtPeriodEnd: boolean;
+  /** When a cancelled subscription ends, in seconds since the epoch. */
+  cancelAt?: number | null;
   /** Billed monthly or yearly; missing on subscriptions synced before yearly plans. */
   interval?: BillingInterval;
 };
@@ -147,7 +150,12 @@ export async function syncSubscription(customerId: string) {
     ? {
         status: latest.status,
         currentPeriodEnd: latest.items.data[0]?.current_period_end ?? null,
-        cancelAtPeriodEnd: latest.cancel_at_period_end,
+        // The customer portal records a cancellation as `cancel_at` (a date)
+        // rather than `cancel_at_period_end`, so check both.
+        cancelAtPeriodEnd: latest.cancel_at_period_end || latest.cancel_at !== null,
+        cancelAt:
+          latest.cancel_at ??
+          (latest.cancel_at_period_end ? (latest.items.data[0]?.current_period_end ?? null) : null),
         interval: latest.items.data[0]?.price.recurring?.interval === "year" ? "year" : "month",
       }
     : null;

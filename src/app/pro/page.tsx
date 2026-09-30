@@ -12,14 +12,15 @@ export const metadata: Metadata = { title: "Quairy Pro" };
 const date = new Intl.DateTimeFormat("en", { dateStyle: "long" });
 
 function Renewal({ subscription }: { subscription: Subscription }) {
-  const end = subscription.currentPeriodEnd
-    ? date.format(new Date(subscription.currentPeriodEnd * 1000))
-    : null;
   if (subscription.status === "past_due") {
     return <>Your last payment didn’t go through. Update your card to keep Pro.</>;
   }
-  if (!end) return null;
-  return subscription.cancelAtPeriodEnd ? <>Pro ends on {end}.</> : <>Renews on {end}.</>;
+  const at = subscription.cancelAtPeriodEnd
+    ? (subscription.cancelAt ?? subscription.currentPeriodEnd)
+    : subscription.currentPeriodEnd;
+  if (!at) return null;
+  const when = date.format(new Date(at * 1000));
+  return subscription.cancelAtPeriodEnd ? <>Pro ends on {when}.</> : <>Renews on {when}.</>;
 }
 
 export default async function ProPage() {
