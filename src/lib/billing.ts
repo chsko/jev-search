@@ -1,5 +1,6 @@
 import "server-only";
 import Stripe from "stripe";
+import { clerkClient } from "@clerk/nextjs/server";
 import { type BillingInterval, PRO_MONTHLY_EUR, PRO_YEARLY_EUR } from "./pricing";
 import { getRedis } from "./redis";
 
@@ -34,6 +35,16 @@ export type Subscription = {
   cancelAt?: number | null;
   /** Billed monthly or yearly; missing on subscriptions synced before yearly plans. */
   interval?: BillingInterval;
+};
+
+/**
+ * What the browser knows about a user's subscription, copied into their
+ * Clerk public metadata so the account menu can offer "Manage subscription"
+ * without asking the server (which would make every page dynamic).
+ */
+export type SubscriptionMetadata = {
+  /** The latest subscription's status, or null if the user has never subscribed. */
+  subscription: Stripe.Subscription.Status | null;
 };
 
 /** Statuses that keep Pro on. `past_due` gives a grace period while Stripe retries the card. */
@@ -161,5 +172,12 @@ export async function syncSubscription(customerId: string) {
     : null;
   if (subscription) await getRedis().set(subscriptionKey(userId), subscription);
   else await getRedis().del(subscriptionKey(userId));
+  try {
+    const publicMetadata: SubscriptionMetadata = { subscription: subscription?.status ?? null };
+    await (await clerkClient()).users.updateUserMetadata(userId, { publicMetadata });
+  } catch (error) {
+    // Only the menu item depends on it; Pro itself is decided from Redis.
+    console.error("Couldn't copy the subscription to Clerk", error);
+  }
   return { userId, subscription };
 }

@@ -1,10 +1,12 @@
 "use client";
 
-import { ViewTransition } from "react";
+import { useSyncExternalStore, ViewTransition } from "react";
 import Link from "next/link";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
-import { HistoryIcon, SparklesIcon } from "lucide-react";
+import { ClerkLoading, Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import { CreditCardIcon, HistoryIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { SubscriptionMetadata } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,6 +23,9 @@ export function Account({ className }: { className?: string }) {
             Pro
           </Link>
         </Button>
+        <ClerkLoading>
+          <AccountSkeleton />
+        </ClerkLoading>
         <Show when="signed-out">
           <SignInButton mode="modal">
             <Button variant="outline" size="sm" className="rounded-full">
@@ -35,9 +40,56 @@ export function Account({ className }: { className?: string }) {
               History
             </Link>
           </Button>
-          <UserButton />
+          <AccountMenu />
         </Show>
       </div>
     </ViewTransition>
+  );
+}
+
+function AccountMenu() {
+  const { user } = useUser();
+  const subscribed = !!(user?.publicMetadata as Partial<SubscriptionMetadata> | undefined)
+    ?.subscription;
+  return (
+    // The button's own code and the avatar image load after Clerk does; the
+    // placeholder underneath holds the spot until the avatar covers it.
+    <div className="relative grid size-7 place-items-center">
+      <Skeleton className="absolute inset-0 rounded-full" />
+      <UserButton>
+        {subscribed && (
+          <UserButton.MenuItems>
+            <UserButton.Link
+              label="Manage subscription"
+              labelIcon={<CreditCardIcon className="size-4" />}
+              href="/pro/manage"
+            />
+          </UserButton.MenuItems>
+        )}
+      </UserButton>
+    </div>
+  );
+}
+
+// Clerk's `__client_uat` cookie is non-zero while signed in. It's readable
+// before Clerk loads, so the placeholder can take the shape of what's coming.
+const subscribeNever = () => () => {};
+const readSignedIn = () => /(?:^|;\s*)__client_uat=[1-9]/.test(document.cookie);
+const unknownOnServer = () => null;
+
+/** Holds the place of the sign-in button or the history link and avatar while Clerk loads. */
+function AccountSkeleton() {
+  const signedIn = useSyncExternalStore(subscribeNever, readSignedIn, unknownOnServer);
+  return (
+    <div role="status" aria-label="Loading your account…" className="flex items-center gap-1">
+      {signedIn ? (
+        <>
+          <Skeleton className="mx-2 h-4 w-16" />
+          <Skeleton className="size-7 rounded-full" />
+        </>
+      ) : (
+        <Skeleton className="h-8 w-[4.5rem] rounded-full" />
+      )}
+    </div>
   );
 }

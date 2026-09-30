@@ -83,10 +83,14 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   per user). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
   is found or created by lookup key. `syncSubscription` copies the latest subscription into
   Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs
-  `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it.
+  `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it. It also copies the status into
+  the user's Clerk `publicMetadata` (`SubscriptionMetadata`), which only decides whether the
+  account menu shows "Manage subscription" (`/pro/manage` redirects to the Stripe portal).
 - Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root
   layout; sign-in and sign-up live in-app at `/sign-in` and `/sign-up`, never Clerk's hosted pages,
   so they keep the Quarry theme). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.
+  While Clerk loads, `Account` shows skeletons shaped by the `__client_uat` cookie (signed in or
+  not), and a placeholder circle sits under the avatar until Clerk's UserButton paints over it.
 - Integrations are provisioned through the Vercel Marketplace (Clerk, Stripe, Upstash); env vars
   come from `vercel env pull`. Production Clerk needs DNS records for the domain.
 

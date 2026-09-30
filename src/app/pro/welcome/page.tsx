@@ -13,6 +13,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getStripe, isPro, syncSubscription } from "@/lib/billing";
+import { RefreshUser } from "./RefreshUser";
 
 export const metadata: Metadata = { title: "Welcome to Quairy Pro" };
 
@@ -35,6 +36,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/pro/welc
 
   return (
     <Empty className="border">
+      <RefreshUser />
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <PartyPopperIcon />
