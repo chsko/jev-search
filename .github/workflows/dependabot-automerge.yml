@@ -3,6 +3,7 @@ name: Merge passing Dependabot updates
 # Runs after CI finishes, in the base repository's context. It never checks
 # out or runs the pull request's code; it only merges when CI succeeded on
 # the pull request's current head commit, so a failing update stays open.
+# Major version updates are left open for a human to review, whatever CI says.
 on:
   workflow_run:
     workflows: [CI]
@@ -33,6 +34,15 @@ jobs:
             --jq ".[] | select(.author.login == \"app/dependabot\" and .headRefOid == \"$HEAD_SHA\") | .number")
           if [ -z "$pr" ]; then
             echo "No open Dependabot pull request at $HEAD_SHA (it moved on or closed); not merging."
+            exit 0
+          fi
+          # Dependabot lists every dependency it updated in the commit message,
+          # each with an update-type. Merge only when all are minor or patch.
+          types=$(gh api "repos/$REPO/commits/$HEAD_SHA" --jq .commit.message |
+            sed -n 's/^ *update-type: *version-update:semver-//p' | sort -u)
+          echo "Update types: ${types:-none found}"
+          if [ -z "$types" ] || echo "$types" | grep -qv -e '^minor$' -e '^patch$'; then
+            echo "Not only minor or patch updates; leaving #$pr for review."
             exit 0
           fi
           gh pr merge "$pr" --repo "$REPO" --squash --delete-branch --match-head-commit "$HEAD_SHA"

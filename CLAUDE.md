@@ -103,7 +103,8 @@ to main, with no secrets (nothing that needs a key runs at build time; keep it t
 Dependabot (`.github/dependabot.yml`) proposes npm and Actions updates weekly, only once a
 version is 7 days old (`cooldown`); minor and patch updates are grouped.
 `dependabot-automerge.yml` squash-merges a Dependabot pull request after CI succeeds on its
-current head commit; one that fails stays open for a human.
+current head commit, if every update in it is minor or patch (read from the `update-type`
+lines of Dependabot's commit message); failing updates and major updates stay open for a human.
 
 ## Commands
 
