@@ -11,6 +11,11 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 10
+    ignore:
+      # Types for the Node.js major that production runs (engines in package.json);
+      # raise both together when Vercel offers a newer Node.js.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
     groups:
       # One pull request for all minor and patch updates; majors stay separate,
       # so a breaking one can't hold back the rest.

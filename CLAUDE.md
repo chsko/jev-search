@@ -100,6 +100,9 @@ one-time Vercel login. Required env var: `TYPESAFE_API_KEY` (server only).
 
 `.github/workflows/ci.yml` runs lint, typecheck, test and build on every pull request and push
 to main, with no secrets (nothing that needs a key runs at build time; keep it that way).
+Production runs Node.js 24 (`engines` in `package.json`, `node-version` in CI); `@types/node`
+stays on the same major, and Dependabot ignores its majors. Raise all three together when Vercel
+offers a newer Node.js.
 Dependabot (`.github/dependabot.yml`) proposes npm and Actions updates weekly, only once a
 version is 7 days old (`cooldown`); minor and patch updates are grouped.
 `dependabot-automerge.yml` squash-merges a Dependabot pull request after CI succeeds on its
