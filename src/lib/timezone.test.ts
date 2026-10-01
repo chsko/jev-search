@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTime, isTimeZone, timeZones } from "./timezone";
+import { formatTime, isTimeFormat, isTimeZone, timeZones } from "./timezone";
 
 describe("time zones", () => {
   it("accepts IANA zones and rejects anything else", () => {
@@ -21,5 +21,13 @@ describe("time zones", () => {
     const at = Date.UTC(2026, 9, 1, 9, 33);
     expect(formatTime(at, "UTC")).toBe("Oct 1, 2026, 9:33 AM");
     expect(formatTime(at, "Europe/Oslo")).toBe("Oct 1, 2026, 11:33 AM");
+  });
+
+  it("formats on a 12- or 24-hour clock", () => {
+    const at = Date.UTC(2026, 9, 1, 13, 5);
+    expect(formatTime(at, "Europe/Oslo", "12h")).toBe("Oct 1, 2026, 3:05 PM");
+    expect(formatTime(at, "Europe/Oslo", "24h")).toBe("Oct 1, 2026, 15:05");
+    expect(isTimeFormat("24h")).toBe(true);
+    expect(isTimeFormat("25h")).toBe(false);
   });
 });

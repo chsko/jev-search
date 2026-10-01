@@ -5,8 +5,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { changeInterval, createCardUpdate, setCancelAtPeriodEnd } from "@/lib/billing";
-import { setTimeZone } from "@/lib/quota";
-import { isTimeZone } from "@/lib/timezone";
+import { setTimeFormat, setTimeZone } from "@/lib/quota";
+import { isTimeFormat, isTimeZone, type TimeFormat } from "@/lib/timezone";
 
 async function signedIn() {
   const { userId } = await auth();
@@ -46,6 +46,15 @@ export async function saveTimeZone(timeZone: string) {
   const { userId } = await auth();
   if (!userId || !isTimeZone(timeZone)) return;
   await setTimeZone(userId, timeZone);
+  revalidatePath("/history");
+  done();
+}
+
+/** Saves whether times are shown on a 12- or 24-hour clock. */
+export async function saveTimeFormat(timeFormat: TimeFormat) {
+  const { userId } = await auth();
+  if (!userId || !isTimeFormat(timeFormat)) return;
+  await setTimeFormat(userId, timeFormat);
   revalidatePath("/history");
   done();
 }

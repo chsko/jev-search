@@ -8,6 +8,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { getSubscription, isPro } from "./billing";
 import { FREE_DAILY_EXTRAS, FREE_DAILY_SEARCHES, HISTORY_SIZE } from "./pricing";
 import { getRedis } from "./redis";
+import { isTimeFormat, type TimeFormat } from "./timezone";
 
 export type Access =
   | { status: "ok"; plan: "pro" | "free" | "bot"; remaining?: number }
@@ -52,6 +53,7 @@ const hashId = (...parts: string[]) =>
     .slice(0, 16);
 const historyKey = (userId: string) => `history:${userId}`;
 const timeZoneKey = (userId: string) => `timezone:${userId}`;
+const timeFormatKey = (userId: string) => `timeformat:${userId}`;
 
 type Allowance = {
   /** Redis key prefix, one set of request ids per visitor per day. */
@@ -144,11 +146,21 @@ export async function clearHistory(userId: string) {
   await getRedis().del(historyKey(userId));
 }
 
-/** The time zone a user chose for their history, if any. */
-export async function getTimeZone(userId: string) {
-  return getRedis().get<string>(timeZoneKey(userId));
+export type TimePreferences = { timeZone: string | null; timeFormat: TimeFormat | null };
+
+/** How a user wants times shown; null for what they haven't chosen yet. */
+export async function getTimePreferences(userId: string): Promise<TimePreferences> {
+  const [timeZone, timeFormat] = await getRedis().mget<[string | null, string | null]>(
+    timeZoneKey(userId),
+    timeFormatKey(userId),
+  );
+  return { timeZone, timeFormat: isTimeFormat(timeFormat) ? timeFormat : null };
 }
 
 export async function setTimeZone(userId: string, timeZone: string) {
   await getRedis().set(timeZoneKey(userId), timeZone);
+}
+
+export async function setTimeFormat(userId: string, timeFormat: TimeFormat) {
+  await getRedis().set(timeFormatKey(userId), timeFormat);
 }

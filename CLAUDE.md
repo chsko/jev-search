@@ -82,8 +82,8 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   Every Jev entry point (search, `/card`, `/text`, Compare) passes `checkBurst` (30/min per IP).
 - Pro (`src/lib/pricing.ts`, €4/month or €30/year, one Stripe product with a price per interval,
   chosen with native radios on the Pro card that submit with the subscribe form): unlimited searches, comparisons and text questions, and search history (Redis sorted set
-  per user, shown in the time zone picked under Settings › Preferences, `timezone:<user>` in Redis,
-  defaulting to and saving the browser's). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
+  per user, shown in the time zone and 12/24-hour clock picked under Settings › Preferences,
+  `timezone:<user>` and `timeformat:<user>` in Redis, each defaulting to and saving the browser's). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
   is found or created by lookup key. `syncSubscription` copies the latest subscription into
   Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs
   `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it.
@@ -94,7 +94,7 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   in-app from live Stripe data (`getBillingDetails`): switch monthly/yearly (prorated, invoiced at
   once), cancel at period end (confirm dialog) or resume, card on file and invoices. Only entering
   a new card leaves the app, through the portal's `payment_method_update` flow. Preferences holds
-  the time zone. Clerk's styles outrank utility classes, so its `appearance` uses style objects.
+  the time zone and time format. Clerk's styles outrank utility classes, so its `appearance` uses style objects.
 - Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root
   layout; sign-in and sign-up live in-app at `/sign-in` and `/sign-up`, never Clerk's hosted pages,
   so they keep the Quarry theme). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.

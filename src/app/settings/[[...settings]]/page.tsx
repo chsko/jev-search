@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { TimeZonePicker } from "@/components/TimeZone";
+import { TimeFormatPicker, TimeZonePicker } from "@/components/TimePreferences";
+import { FieldGroup } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBillingDetails } from "@/lib/billing";
-import { getTimeZone } from "@/lib/quota";
+import { getTimePreferences } from "@/lib/quota";
 import { Profile } from "../Profile";
 import { SettingsSkeleton } from "../SettingsSkeleton";
 import { SubscriptionSettings } from "../Subscription";
@@ -40,7 +41,7 @@ function SubscriptionSkeleton() {
 export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect(`/sign-in?${new URLSearchParams({ redirect_url: "/settings" })}`);
-  const timeZone = await getTimeZone(userId);
+  const { timeZone, timeFormat } = await getTimePreferences(userId);
 
   return (
     <div className="auth-slot grid w-full">
@@ -58,7 +59,10 @@ export default async function SettingsPage() {
           preferences={
             <>
               <PageTitle>Preferences</PageTitle>
-              <TimeZonePicker saved={timeZone} />
+              <FieldGroup>
+                <TimeZonePicker saved={timeZone} />
+                <TimeFormatPicker saved={timeFormat} />
+              </FieldGroup>
             </>
           }
         />

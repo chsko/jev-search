@@ -13,9 +13,9 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getSubscription, isPro } from "@/lib/billing";
-import { getHistory, getTimeZone } from "@/lib/quota";
+import { getHistory, getTimePreferences } from "@/lib/quota";
 import { clearSearchHistory } from "./actions";
-import { RememberTimeZone, SearchTime } from "@/components/TimeZone";
+import { RememberTimePreferences, SearchTime } from "@/components/TimePreferences";
 
 export const metadata: Metadata = { title: "Search history – Quairy" };
 
@@ -53,7 +53,7 @@ export default async function HistoryPage() {
     );
   }
 
-  const [history, timeZone] = await Promise.all([getHistory(userId), getTimeZone(userId)]);
+  const [history, time] = await Promise.all([getHistory(userId), getTimePreferences(userId)]);
   if (history.length === 0) {
     return (
       <Notice
@@ -88,15 +88,15 @@ export default async function HistoryPage() {
             >
               <span className="break-words">{q}</span>
               <span className="text-xs text-muted-foreground">
-                <SearchTime at={at} zone={timeZone} />
+                <SearchTime at={at} saved={time} />
               </span>
             </Link>
           </li>
         ))}
       </ul>
       <p className="text-sm text-muted-foreground">
-        <RememberTimeZone saved={timeZone} />
-        Times are shown in {timeZone ? timeZone.replaceAll("_", " ") : "your time zone"}.{" "}
+        <RememberTimePreferences saved={time} />
+        Times are shown in {time.timeZone ? time.timeZone.replaceAll("_", " ") : "your time zone"}.{" "}
         <Link
           href="/settings/preferences"
           className="font-medium text-foreground underline-offset-4 hover:underline"
