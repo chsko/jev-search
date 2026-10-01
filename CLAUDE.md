@@ -86,14 +86,11 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   defaulting to and saving the browser's). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
   is found or created by lookup key. `syncSubscription` copies the latest subscription into
   Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs
-  `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it. It also copies the status into
-  the user's Clerk `publicMetadata` (`SubscriptionMetadata`), which only decides whether the
-  account menu shows "Manage subscription" (a link to `/settings/subscription`).
-  `getSubscription` backfills that metadata once per user (marker `clerk-metadata:v1:<user>`)
-  for subscriptions synced before it existed; bump the marker version if the metadata changes.
+  `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it.
 - Settings (`/settings`, `src/app/settings`) is one dashboard: Clerk's `<UserProfile>` (profile and
   security, path routing) with Quairy's own pages inside it, Subscription and Preferences. The
-  avatar menu's "Manage account" opens it (`userProfileMode="navigation"`). Subscription is built
+  avatar menu's "Manage account" opens it (`userProfileMode="navigation"`); there is no separate
+  subscription item. Subscription is built
   in-app from live Stripe data (`getBillingDetails`): switch monthly/yearly (prorated, invoiced at
   once), cancel at period end (confirm dialog) or resume, card on file and invoices. Only entering
   a new card leaves the app, through the portal's `payment_method_update` flow. Preferences holds

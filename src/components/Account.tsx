@@ -2,11 +2,10 @@
 
 import { useSyncExternalStore, ViewTransition } from "react";
 import Link from "next/link";
-import { ClerkLoading, Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
-import { CreditCardIcon, HistoryIcon, SparklesIcon } from "lucide-react";
+import { ClerkLoading, Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { HistoryIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { SubscriptionMetadata } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,26 +47,13 @@ export function Account({ className }: { className?: string }) {
 }
 
 function AccountMenu() {
-  const { user } = useUser();
-  const subscribed = !!(user?.publicMetadata as Partial<SubscriptionMetadata> | undefined)
-    ?.subscription;
   return (
     // The button's own code and the avatar image load after Clerk does; the
     // placeholder underneath holds the spot until the avatar covers it.
     <div className="relative grid size-7 place-items-center">
       <Skeleton className="absolute inset-0 rounded-full" />
-      {/* "Manage account" opens Quairy's settings dashboard, not Clerk's modal. */}
-      <UserButton userProfileMode="navigation" userProfileUrl="/settings">
-        {subscribed && (
-          <UserButton.MenuItems>
-            <UserButton.Link
-              label="Manage subscription"
-              labelIcon={<CreditCardIcon className="size-4" />}
-              href="/settings/subscription"
-            />
-          </UserButton.MenuItems>
-        )}
-      </UserButton>
+      {/* "Manage account" opens Quairy's settings dashboard (subscription included), not Clerk's modal. */}
+      <UserButton userProfileMode="navigation" userProfileUrl="/settings" />
     </div>
   );
 }
