@@ -13,7 +13,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getStripe, isPro, syncSubscription } from "@/lib/billing";
-import { RefreshUser } from "./RefreshUser";
+import { RefreshUser } from "@/components/RefreshUser";
 
 export const metadata: Metadata = { title: "Welcome to Quairy Pro" };
 

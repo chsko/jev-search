@@ -51,7 +51,32 @@ export type SubscriptionMetadata = {
 const ACTIVE: Stripe.Subscription.Status[] = ["active", "trialing", "past_due"];
 
 export async function getSubscription(userId: string): Promise<Subscription | null> {
-  return getRedis().get<Subscription>(subscriptionKey(userId));
+  const subscription = await getRedis().get<Subscription>(subscriptionKey(userId));
+  if (subscription) await backfillMetadata(userId, subscription);
+  return subscription;
+}
+
+/**
+ * Subscriptions synced before the account menu read Clerk metadata never
+ * copied their status there. The first time the server sees one, copy it;
+ * a marker in Redis keeps that to once per user.
+ */
+async function backfillMetadata(userId: string, subscription: Subscription) {
+  const marker = `clerk-metadata:v1:${userId}`;
+  try {
+    if (!(await getRedis().set(marker, 1, { nx: true }))) return;
+    await copyToClerk(userId, subscription).catch(async (error) => {
+      await getRedis().del(marker); // Try again next time.
+      throw error;
+    });
+  } catch (error) {
+    console.error("Couldn't backfill Clerk metadata", error);
+  }
+}
+
+async function copyToClerk(userId: string, subscription: Subscription | null) {
+  const publicMetadata: SubscriptionMetadata = { subscription: subscription?.status ?? null };
+  await (await clerkClient()).users.updateUserMetadata(userId, { publicMetadata });
 }
 
 export function isPro(subscription: Subscription | null) {
@@ -173,8 +198,8 @@ export async function syncSubscription(customerId: string) {
   if (subscription) await getRedis().set(subscriptionKey(userId), subscription);
   else await getRedis().del(subscriptionKey(userId));
   try {
-    const publicMetadata: SubscriptionMetadata = { subscription: subscription?.status ?? null };
-    await (await clerkClient()).users.updateUserMetadata(userId, { publicMetadata });
+    await copyToClerk(userId, subscription);
+    await getRedis().set(`clerk-metadata:v1:${userId}`, 1);
   } catch (error) {
     // Only the menu item depends on it; Pro itself is decided from Redis.
     console.error("Couldn't copy the subscription to Clerk", error);

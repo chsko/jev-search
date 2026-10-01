@@ -86,6 +86,8 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it. It also copies the status into
   the user's Clerk `publicMetadata` (`SubscriptionMetadata`), which only decides whether the
   account menu shows "Manage subscription" (`/pro/manage` redirects to the Stripe portal).
+  `getSubscription` backfills that metadata once per user (marker `clerk-metadata:v1:<user>`)
+  for subscriptions synced before it existed; bump the marker version if the metadata changes.
 - Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root
   layout; sign-in and sign-up live in-app at `/sign-in` and `/sign-up`, never Clerk's hosted pages,
   so they keep the Quarry theme). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.

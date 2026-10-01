@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import { RefreshUser } from "@/components/RefreshUser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getSubscription, isPro, type Subscription } from "@/lib/billing";
@@ -35,6 +36,8 @@ export default async function ProPage() {
       footer={
         pro ? (
           <>
+            {/* Picks up a subscription status just copied to Clerk, for the account menu. */}
+            <RefreshUser />
             <form action={manageSubscription}>
               <Button type="submit" variant="outline" className="w-full rounded-full">
                 Manage subscription
