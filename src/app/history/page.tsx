@@ -13,12 +13,11 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getSubscription, isPro } from "@/lib/billing";
-import { getHistory } from "@/lib/quota";
+import { getHistory, getTimeZone } from "@/lib/quota";
 import { clearSearchHistory } from "./actions";
+import { RememberTimeZone, SearchTime } from "@/components/TimeZone";
 
 export const metadata: Metadata = { title: "Search history – Quairy" };
-
-const when = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
 
 function Notice({ title, description, action }: { title: string; description: string; action: React.ReactNode }) {
   return (
@@ -54,7 +53,7 @@ export default async function HistoryPage() {
     );
   }
 
-  const history = await getHistory(userId);
+  const [history, timeZone] = await Promise.all([getHistory(userId), getTimeZone(userId)]);
   if (history.length === 0) {
     return (
       <Notice
@@ -88,11 +87,23 @@ export default async function HistoryPage() {
               className="flex flex-col gap-0.5 px-4 py-3 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
             >
               <span className="break-words">{q}</span>
-              <span className="text-xs text-muted-foreground">{when.format(at)} UTC</span>
+              <span className="text-xs text-muted-foreground">
+                <SearchTime at={at} zone={timeZone} />
+              </span>
             </Link>
           </li>
         ))}
       </ul>
+      <p className="text-sm text-muted-foreground">
+        <RememberTimeZone saved={timeZone} />
+        Times are shown in {timeZone ? timeZone.replaceAll("_", " ") : "your time zone"}.{" "}
+        <Link
+          href="/settings/preferences"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          Change
+        </Link>
+      </p>
     </div>
   );
 }

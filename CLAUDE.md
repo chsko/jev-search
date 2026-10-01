@@ -74,20 +74,30 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
 - Free: `FREE_DAILY_SEARCHES` (10) distinct web searches a day (UTC), counted in Upstash Redis
   per Clerk user or, signed out, per IP (`checkSearch` in `src/lib/quota.ts`, React `cache`d so
   page and metadata count once; repeats of a question are free; link-preview bots aren't
-  counted). Over the limit, metadata must not carry the answer. Compare and "Ask about a text"
+  counted). Only link-preview bots get the answer in a search page's metadata: metadata
+  also runs when a link to the page is prefetched (home examples, history), and that must never
+  ask Jev, count a search or restamp history. Compare and "Ask about a text"
   cost up to 10x a search, so they share their own allowance, `FREE_DAILY_EXTRAS` (3) a day
   (`checkExtra`; repeating the same comparison or question on the same text is free).
   Every Jev entry point (search, `/card`, `/text`, Compare) passes `checkBurst` (30/min per IP).
 - Pro (`src/lib/pricing.ts`, €4/month or €30/year, one Stripe product with a price per interval,
   chosen with native radios on the Pro card that submit with the subscribe form): unlimited searches, comparisons and text questions, and search history (Redis sorted set
-  per user). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
+  per user, shown in the time zone picked under Settings › Preferences, `timezone:<user>` in Redis,
+  defaulting to and saving the browser's). Stripe Checkout + customer portal (`src/lib/billing.ts`, `src/app/pro`); the price
   is found or created by lookup key. `syncSubscription` copies the latest subscription into
   Redis and is the only writer: the webhook (`/api/stripe/webhook`, needs
   `STRIPE_WEBHOOK_SECRET`) and the post-checkout page both call it. It also copies the status into
   the user's Clerk `publicMetadata` (`SubscriptionMetadata`), which only decides whether the
-  account menu shows "Manage subscription" (`/pro/manage` redirects to the Stripe portal).
+  account menu shows "Manage subscription" (a link to `/settings/subscription`).
   `getSubscription` backfills that metadata once per user (marker `clerk-metadata:v1:<user>`)
   for subscriptions synced before it existed; bump the marker version if the metadata changes.
+- Settings (`/settings`, `src/app/settings`) is one dashboard: Clerk's `<UserProfile>` (profile and
+  security, path routing) with Quairy's own pages inside it, Subscription and Preferences. The
+  avatar menu's "Manage account" opens it (`userProfileMode="navigation"`). Subscription is built
+  in-app from live Stripe data (`getBillingDetails`): switch monthly/yearly (prorated, invoiced at
+  once), cancel at period end (confirm dialog) or resume, card on file and invoices. Only entering
+  a new card leaves the app, through the portal's `payment_method_update` flow. Preferences holds
+  the time zone. Clerk's styles outrank utility classes, so its `appearance` uses style objects.
 - Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root
   layout; sign-in and sign-up live in-app at `/sign-in` and `/sign-up`, never Clerk's hosted pages,
   so they keep the Quarry theme). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.

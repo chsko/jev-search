@@ -5,7 +5,7 @@ import { RefreshUser } from "@/components/RefreshUser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getSubscription, isPro, type Subscription } from "@/lib/billing";
-import { manageSubscription, subscribe } from "./actions";
+import { subscribe } from "./actions";
 import { Plans, SUBSCRIBE_FORM } from "./Plans";
 
 export const metadata: Metadata = { title: "Quairy Pro" };
@@ -38,11 +38,9 @@ export default async function ProPage() {
           <>
             {/* Picks up a subscription status just copied to Clerk, for the account menu. */}
             <RefreshUser />
-            <form action={manageSubscription}>
-              <Button type="submit" variant="outline" className="w-full rounded-full">
-                Manage subscription
-              </Button>
-            </form>
+            <Button asChild variant="outline" className="w-full rounded-full">
+              <Link href="/settings/subscription">Manage subscription</Link>
+            </Button>
             <p className="text-center text-xs text-muted-foreground">
               <Renewal subscription={subscription!} />
             </p>

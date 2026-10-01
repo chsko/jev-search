@@ -155,17 +155,6 @@ export async function createCheckout({
   return session.url!;
 }
 
-/** Stripe's customer portal, where subscribers change their card or cancel. */
-export async function createPortal({ userId, origin }: { userId: string; origin: string }) {
-  const customer = await getCustomerId(userId);
-  if (!customer) return null;
-  const session = await getStripe().billingPortal.sessions.create({
-    customer,
-    return_url: `${origin}/pro`,
-  });
-  return session.url;
-}
-
 /**
  * Copies a customer's current subscription from Stripe into Redis. Safe to
  * call any number of times, from any event: it always reads the latest state.
@@ -205,4 +194,134 @@ export async function syncSubscription(customerId: string) {
     console.error("Couldn't copy the subscription to Clerk", error);
   }
   return { userId, subscription };
+}
+
+export type BillingDetails = {
+  subscriptionId: string;
+  subscription: Subscription;
+  /** What each renewal costs, in cents. */
+  amount: number;
+  currency: string;
+  card: { brand: string; last4: string; expMonth: number; expYear: number } | null;
+  invoices: {
+    id: string;
+    number: string | null;
+    created: number;
+    amount: number;
+    currency: string;
+    status: Stripe.Invoice.Status | null;
+    url: string | null;
+  }[];
+};
+
+/**
+ * Everything the subscription settings show, read live from Stripe: the
+ * latest subscription, the card it charges and recent invoices.
+ */
+export async function getBillingDetails(userId: string): Promise<BillingDetails | null> {
+  const customerId = await getCustomerId(userId);
+  if (!customerId) return null;
+  const stripe = getStripe();
+  const [subscriptions, invoices, customer] = await Promise.all([
+    stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 1,
+      expand: ["data.default_payment_method"],
+    }),
+    stripe.invoices.list({ customer: customerId, limit: 12 }),
+    stripe.customers.retrieve(customerId, { expand: ["invoice_settings.default_payment_method"] }),
+  ]);
+  const latest = subscriptions.data[0];
+  const subscription = await getSubscription(userId);
+  if (!latest || !subscription) return null;
+
+  const fallback = customer.deleted ? null : customer.invoice_settings.default_payment_method;
+  const method = [latest.default_payment_method, fallback].find(
+    (m): m is Stripe.PaymentMethod => typeof m === "object" && m !== null && !!m.card,
+  );
+  const item = latest.items.data[0];
+  return {
+    subscriptionId: latest.id,
+    subscription,
+    amount: (item?.price.unit_amount ?? 0) * (item?.quantity ?? 1),
+    currency: item?.price.currency ?? "eur",
+    card: method?.card
+      ? {
+          brand: method.card.brand,
+          last4: method.card.last4,
+          expMonth: method.card.exp_month,
+          expYear: method.card.exp_year,
+        }
+      : null,
+    invoices: invoices.data
+      .filter((invoice) => invoice.status !== "draft")
+      .map((invoice) => ({
+        id: invoice.id ?? "",
+        number: invoice.number,
+        created: invoice.created,
+        amount: invoice.total,
+        currency: invoice.currency,
+        status: invoice.status,
+        url: invoice.hosted_invoice_url ?? null,
+      })),
+  };
+}
+
+/** The user's latest subscription in Stripe, or null. Changes go through this. */
+async function getStripeSubscription(userId: string) {
+  const customerId = await getCustomerId(userId);
+  if (!customerId) return null;
+  const { data } = await getStripe().subscriptions.list({ customer: customerId, limit: 1 });
+  return data[0] ? { customerId, subscription: data[0] } : null;
+}
+
+/**
+ * Moves a subscription to monthly or yearly billing. The change is invoiced
+ * at once, prorated: what's left of the current period is credited.
+ */
+export async function changeInterval(userId: string, interval: BillingInterval) {
+  const found = await getStripeSubscription(userId);
+  const item = found?.subscription.items.data[0];
+  if (!found || !item) return;
+  const price = await getProPrice(interval);
+  if (item.price.id !== price) {
+    await getStripe().subscriptions.update(found.subscription.id, {
+      items: [{ id: item.id, price }],
+      proration_behavior: "always_invoice",
+    });
+  }
+  await syncSubscription(found.customerId);
+}
+
+/** Cancels at the end of the paid period, or (with `false`) takes that back. */
+export async function setCancelAtPeriodEnd(userId: string, cancel: boolean) {
+  const found = await getStripeSubscription(userId);
+  if (!found) return;
+  const { id, cancel_at_period_end: atPeriodEnd } = found.subscription;
+  await getStripe().subscriptions.update(
+    id,
+    cancel
+      ? { cancel_at_period_end: true }
+      : // Stripe takes one or the other; the customer portal cancelled with `cancel_at`.
+        atPeriodEnd
+        ? { cancel_at_period_end: false }
+        : { cancel_at: "" },
+  );
+  await syncSubscription(found.customerId);
+}
+
+/** Stripe's page for entering a new card, which returns to `returnUrl`. */
+export async function createCardUpdate({ userId, returnUrl }: { userId: string; returnUrl: string }) {
+  const found = await getStripeSubscription(userId);
+  if (!found) return null;
+  const session = await getStripe().billingPortal.sessions.create({
+    customer: found.customerId,
+    return_url: returnUrl,
+    flow_data: {
+      type: "payment_method_update",
+      after_completion: { type: "redirect", redirect: { return_url: returnUrl } },
+    },
+  });
+  return session.url;
 }

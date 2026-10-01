@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { userAgent } from "next/server";
 import { ViewTransition } from "react";
 import { Answer } from "@/components/Answer";
 import { ErrorCard } from "@/components/ErrorCard";
@@ -26,13 +28,17 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   // which /card renders from the same question.
   // A page’s Open Graph fields replace the layout’s, so fall back explicitly.
   let description = SITE_DESCRIPTION;
-  try {
-    // Over the limit, the preview must not carry the answer either.
-    if ((await checkSearch(q)).status !== "ok") throw new Error("Not allowed");
-    const summary = summarize(await search(q));
-    if (summary) description = `${summary.answer}. ${summary.detail}`;
-  } catch {
-    // The page shows the error; the preview falls back to the site description.
+  // Only link-preview bots read it. For people, metadata also runs when a link
+  // to this page is prefetched, which must not ask Jev, count a search or
+  // stamp the question in their history.
+  if (userAgent({ headers: await headers() }).isBot) {
+    try {
+      if ((await checkSearch(q)).status !== "ok") throw new Error("Not allowed");
+      const summary = summarize(await search(q));
+      if (summary) description = `${summary.answer}. ${summary.detail}`;
+    } catch {
+      // The preview falls back to the site description.
+    }
   }
   const title = `${q} – Quairy`;
   const image = { url: `/card?${new URLSearchParams({ q })}`, width: 1200, height: 630, alt: title };
