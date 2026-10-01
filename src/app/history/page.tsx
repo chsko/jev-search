@@ -15,7 +15,7 @@ import {
 import { getSubscription, isPro } from "@/lib/billing";
 import { getHistory, getTimeZone } from "@/lib/quota";
 import { clearSearchHistory } from "./actions";
-import { SearchTime, TimeZonePicker } from "./TimeZone";
+import { RememberTimeZone, SearchTime } from "@/components/TimeZone";
 
 export const metadata: Metadata = { title: "Search history – Quairy" };
 
@@ -70,16 +70,13 @@ export default async function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-bold tracking-tight">Search history</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <TimeZonePicker saved={timeZone} />
-          <form action={clearSearchHistory}>
-            <Button type="submit" variant="ghost" size="sm">
-              Clear history
-            </Button>
-          </form>
-        </div>
+        <form action={clearSearchHistory}>
+          <Button type="submit" variant="ghost" size="sm">
+            Clear history
+          </Button>
+        </form>
       </div>
       <ul className="flex flex-col divide-y rounded-xl border bg-card">
         {history.map(({ q, at }) => (
@@ -97,6 +94,16 @@ export default async function HistoryPage() {
           </li>
         ))}
       </ul>
+      <p className="text-sm text-muted-foreground">
+        <RememberTimeZone saved={timeZone} />
+        Times are shown in {timeZone ? timeZone.replaceAll("_", " ") : "your time zone"}.{" "}
+        <Link
+          href="/settings/preferences"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          Change
+        </Link>
+      </p>
     </div>
   );
 }

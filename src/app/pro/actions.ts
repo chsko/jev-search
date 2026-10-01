@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { createCheckout, createPortal } from "@/lib/billing";
+import { createCheckout } from "@/lib/billing";
 
 async function origin() {
   const h = await headers();
@@ -27,12 +27,4 @@ export async function subscribe(formData: FormData) {
     interval,
   });
   redirect(url);
-}
-
-/** Opens Stripe's customer portal to change the card or cancel. */
-export async function manageSubscription() {
-  const { userId, redirectToSignIn } = await auth();
-  if (!userId) return redirectToSignIn({ returnBackUrl: "/pro" });
-  const url = await createPortal({ userId, origin: await origin() });
-  redirect(url ?? "/pro");
 }

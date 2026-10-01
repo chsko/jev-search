@@ -56,13 +56,14 @@ function AccountMenu() {
     // placeholder underneath holds the spot until the avatar covers it.
     <div className="relative grid size-7 place-items-center">
       <Skeleton className="absolute inset-0 rounded-full" />
-      <UserButton>
+      {/* "Manage account" opens Quairy's settings dashboard, not Clerk's modal. */}
+      <UserButton userProfileMode="navigation" userProfileUrl="/settings">
         {subscribed && (
           <UserButton.MenuItems>
             <UserButton.Link
               label="Manage subscription"
               labelIcon={<CreditCardIcon className="size-4" />}
-              href="/pro/manage"
+              href="/settings/subscription"
             />
           </UserButton.MenuItems>
         )}

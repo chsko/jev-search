@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useOptimistic, useSyncExternalStore, useTransition } from "react";
-import { Label } from "@/components/ui/label";
+import { saveTimeZone } from "@/app/settings/actions";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTime, timeZones } from "@/lib/timezone";
-import { saveTimeZone } from "./actions";
 
 const subscribeNever = () => () => {};
 const browserZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -17,32 +17,40 @@ function useBrowserZone() {
 }
 
 /**
- * Picks the time zone for the history's timestamps. Until someone picks one,
- * it uses (and saves) the browser's, so later visits render it on the server.
+ * Until someone picks a time zone, saves the browser's, so later visits can
+ * render times on the server.
  */
-export function TimeZonePicker({ saved }: { saved: string | null }) {
+function useRememberBrowserZone(saved: string | null) {
   const detected = useBrowserZone();
-  const [zone, setZone] = useOptimistic(saved ?? detected);
+  const [, startTransition] = useTransition();
+  useEffect(() => {
+    if (!saved && detected) startTransition(() => saveTimeZone(detected));
+  }, [saved, detected]);
+  return saved ?? detected;
+}
+
+/** Remembers the browser's time zone for someone who hasn't picked one. */
+export function RememberTimeZone({ saved }: { saved: string | null }) {
+  useRememberBrowserZone(saved);
+  return null;
+}
+
+/** The time zone setting, defaulting to the browser's. */
+export function TimeZonePicker({ saved }: { saved: string | null }) {
+  const current = useRememberBrowserZone(saved);
+  const [zone, setZone] = useOptimistic(current);
   const [, startTransition] = useTransition();
   const zones = useMemo(() => {
     const all = timeZones();
     return zone && !all.includes(zone) ? [zone, ...all] : all;
   }, [zone]);
 
-  useEffect(() => {
-    if (!saved && detected) startTransition(() => saveTimeZone(detected));
-  }, [saved, detected]);
-
   return (
-    <div className="flex items-center gap-2">
-      <Label htmlFor="time-zone" className="text-muted-foreground">
-        Time zone
-      </Label>
+    <Field>
+      <FieldLabel htmlFor="time-zone">Time zone</FieldLabel>
       <NativeSelect
         id="time-zone"
-        size="sm"
-        // Sized for typical names rather than the longest one in the list.
-        className="w-44"
+        className="w-full max-w-xs"
         value={zone ?? ""}
         disabled={!zone}
         onChange={(event) => {
@@ -60,7 +68,8 @@ export function TimeZonePicker({ saved }: { saved: string | null }) {
           </NativeSelectOption>
         ))}
       </NativeSelect>
-    </div>
+      <FieldDescription>Your search history shows times in this time zone.</FieldDescription>
+    </Field>
   );
 }
 
