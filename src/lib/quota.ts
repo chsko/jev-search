@@ -51,6 +51,7 @@ const hashId = (...parts: string[]) =>
     .digest("base64url")
     .slice(0, 16);
 const historyKey = (userId: string) => `history:${userId}`;
+const timeZoneKey = (userId: string) => `timezone:${userId}`;
 
 type Allowance = {
   /** Redis key prefix, one set of request ids per visitor per day. */
@@ -141,4 +142,13 @@ export async function getHistory(userId: string) {
 
 export async function clearHistory(userId: string) {
   await getRedis().del(historyKey(userId));
+}
+
+/** The time zone a user chose for their history, if any. */
+export async function getTimeZone(userId: string) {
+  return getRedis().get<string>(timeZoneKey(userId));
+}
+
+export async function setTimeZone(userId: string, timeZone: string) {
+  await getRedis().set(timeZoneKey(userId), timeZone);
 }
