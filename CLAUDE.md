@@ -112,6 +112,14 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   `CLERK_WEBHOOK_SIGNING_SECRET`, event `user.deleted`) deletes a deleted user's Redis data
   (`forgetUser`, `forgetCustomer`) and stops their subscription renewing; add any new per-user
   Redis key to `forgetUser`.
+- Analytics: Vercel Web Analytics (cookie-free, bots excluded) plus server-side custom events via
+  `trackEvent` (`src/lib/stats.ts`, sent in `after()`): `Search` (plan), `Signup` (Clerk
+  `user.created`), `Subscribe`, `Cancel`, `Resume`, `Subscription ended` (from changes seen in
+  `syncSubscription`). Redis keeps daily counts (`stats:<day>`: searches, proSearches, botPreviews)
+  and a HyperLogLog of anonymous searcher ids (`stats:searchers:<day>`), 120 days. The owner's
+  dashboard `/admin` (404 unless a verified email is in `ADMIN_EMAILS`, checked in the layout)
+  combines them with Vercel's Web Analytics API (`VERCEL_ANALYTICS_TOKEN`), Clerk sign-ups and
+  Stripe subscriptions (`src/lib/dashboard.ts`).
 - Integrations are provisioned through the Vercel Marketplace (Clerk, Stripe, Upstash); env vars
   come from `vercel env pull`. Production Clerk needs DNS records for the domain.
 

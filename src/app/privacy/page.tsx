@@ -62,7 +62,11 @@ export default function PrivacyPage() {
           <li>
             <strong>Usage statistics.</strong> Vercel Web Analytics and Speed Insights count page
             views and measure loading speed without cookies and without following you across
-            sites. Why: to understand and improve Quairy (legitimate interest).
+            sites. We also count searches, sign-ups and subscription changes, without your
+            question or who you are, and estimate how many different people searched each day
+            from a scrambled code that can’t be turned back into your account or IP address. We
+            keep these counts for 120 days. Why: to understand and improve Quairy (legitimate
+            interest).
           </li>
         </List>
         <p>We don’t sell your data, and we don’t use it for advertising.</p>

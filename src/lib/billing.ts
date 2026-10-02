@@ -2,6 +2,7 @@ import "server-only";
 import Stripe from "stripe";
 import { type BillingInterval, PRO_MONTHLY_EUR, PRO_YEARLY_EUR } from "./pricing";
 import { getRedis } from "./redis";
+import { trackEvent } from "./stats";
 
 // Quairy Pro is a Stripe subscription. Redis keeps the mapping between Clerk
 // users and Stripe customers, and a copy of each user's subscription, which
@@ -177,9 +178,29 @@ export async function syncSubscription(customerId: string) {
         interval: latest.items.data[0]?.price.recurring?.interval === "year" ? "year" : "month",
       }
     : null;
+  const previous = await getSubscription(userId);
   if (subscription) await getRedis().set(subscriptionKey(userId), subscription);
   else await getRedis().del(subscriptionKey(userId));
+  await trackChange(previous, subscription);
   return { userId, subscription };
+}
+
+/**
+ * Sends Subscribe, Cancel, Resume and Ended events to Web Analytics when a
+ * sync changes what matters. Syncs repeat (webhooks retry, the welcome page
+ * syncs too), so events come from the change, not from the sync.
+ */
+async function trackChange(before: Subscription | null, after: Subscription | null) {
+  const was = isPro(before);
+  const is = isPro(after);
+  const interval = after?.interval ?? before?.interval ?? "month";
+  if (!was && is) await trackEvent("Subscribe", { interval });
+  else if (was && !is) await trackEvent("Subscription ended", { interval });
+  else if (was && is && !before!.cancelAtPeriodEnd && after!.cancelAtPeriodEnd) {
+    await trackEvent("Cancel", { interval });
+  } else if (was && is && before!.cancelAtPeriodEnd && !after!.cancelAtPeriodEnd) {
+    await trackEvent("Resume", { interval });
+  }
 }
 
 export type BillingDetails = {

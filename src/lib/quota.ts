@@ -8,6 +8,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { getSubscription, isPro } from "./billing";
 import { FREE_DAILY_EXTRAS, FREE_DAILY_SEARCHES, HISTORY_SIZE } from "./pricing";
 import { getRedis } from "./redis";
+import { recordBotPreview, recordSearch } from "./stats";
 import { isTimeFormat, type TimeFormat } from "./timezone";
 
 export type Access =
@@ -92,19 +93,27 @@ async function useAllowance(
  */
 export const checkSearch = cache(async (q: string): Promise<Access> => {
   if (!(await checkBurst())) return { status: "slow_down" };
-  if (userAgent({ headers: await headers() }).isBot) return { status: "ok", plan: "bot" };
+  if (userAgent({ headers: await headers() }).isBot) {
+    await recordBotPreview();
+    return { status: "ok", plan: "bot" };
+  }
 
   try {
     const { userId } = await auth();
+    // Anonymous: the stats only count how many different visitors searched.
+    const visitor = hashId("visitor", userId ?? (await clientIp()));
     if (userId && isPro(await getSubscription(userId))) {
       await getRedis()
         .pipeline()
         .zadd(historyKey(userId), { score: Date.now(), member: q })
         .zremrangebyrank(historyKey(userId), 0, -(HISTORY_SIZE + 1))
         .exec();
+      await recordSearch(visitor, "pro");
       return { status: "ok", plan: "pro" };
     }
-    return await useAllowance(userId, SEARCHES, hashId(q));
+    const access = await useAllowance(userId, SEARCHES, hashId(q));
+    if (access.status === "ok") await recordSearch(visitor, "free");
+    return access;
   } catch (error) {
     // Better to answer than to lock everyone out when Redis is unreachable.
     console.error("Quota check failed", error);
