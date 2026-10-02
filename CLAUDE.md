@@ -92,7 +92,9 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   avatar menu's "Manage account" opens it (`userProfileMode="navigation"`); there is no separate
   subscription item. Subscription is built
   in-app from live Stripe data (`getBillingDetails`): switch monthly/yearly (prorated, invoiced at
-  once), cancel at period end (confirm dialog) or resume, card on file and invoices. Only entering
+  once), cancel at period end (confirm dialog) or resume, card on file and invoices. Each action
+  shows a spinner until the change and the refreshed page are back (`SubmitButton`, which reads
+  `useFormStatus`; the cancel dialog stays open while it works). Only entering
   a new card leaves the app, through the portal's `payment_method_update` flow. Preferences holds
   the time zone and time format. Clerk's styles outrank utility classes, so its `appearance` uses style objects.
 - Auth is Clerk (`src/proxy.ts`, public-first; `ClerkProvider` with the shadcn theme in the root

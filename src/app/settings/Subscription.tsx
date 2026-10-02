@@ -13,6 +13,7 @@ import {
 } from "@/lib/pricing";
 import { resumeSubscription, switchInterval, updateCard } from "./actions";
 import { CancelButton } from "./CancelButton";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const money = (cents: number, currency: string) =>
   new Intl.NumberFormat("en", { style: "currency", currency, minimumFractionDigits: 0 }).format(
@@ -99,19 +100,24 @@ export function SubscriptionSettings({
         <div className="mt-3 flex flex-wrap gap-2">
           {ending ? (
             <form action={resumeSubscription}>
-              <Button type="submit" className="rounded-full">
+              <SubmitButton className="rounded-full" pendingLabel="Resuming…">
                 Resume subscription
-              </Button>
+              </SubmitButton>
             </form>
           ) : (
             <>
               <form action={switchInterval}>
                 <input type="hidden" name="interval" value={yearly ? "month" : "year"} />
-                <Button type="submit" variant="outline" size="sm" className="rounded-full">
+                <SubmitButton
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  pendingLabel={yearly ? "Switching to monthly…" : "Switching to yearly…"}
+                >
                   {yearly
                     ? `Switch to monthly (€${PRO_MONTHLY_EUR}/month)`
                     : `Switch to yearly (€${PRO_YEARLY_EUR}/year, save ${YEARLY_SAVING_PERCENT}%)`}
-                </Button>
+                </SubmitButton>
               </form>
               <CancelButton endsOn={subscription.currentPeriodEnd ? date(subscription.currentPeriodEnd) : null} />
             </>
@@ -142,9 +148,9 @@ export function SubscriptionSettings({
             )}
           </p>
           <form action={updateCard}>
-            <Button type="submit" variant="outline" size="sm" className="rounded-full">
+            <SubmitButton variant="outline" size="sm" className="rounded-full" pendingLabel="Opening Stripe…">
               {card ? "Update card" : "Add card"}
-            </Button>
+            </SubmitButton>
           </form>
         </div>
       </Section>
