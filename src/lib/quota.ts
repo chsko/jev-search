@@ -164,3 +164,8 @@ export async function setTimeZone(userId: string, timeZone: string) {
 export async function setTimeFormat(userId: string, timeFormat: TimeFormat) {
   await getRedis().set(timeFormatKey(userId), timeFormat);
 }
+
+/** Deletes a user's search history and preferences, for a deleted account. */
+export async function forgetUser(userId: string) {
+  await getRedis().del(historyKey(userId), timeZoneKey(userId), timeFormatKey(userId));
+}

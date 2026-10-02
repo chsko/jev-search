@@ -100,6 +100,16 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   so they keep the Quarry theme). Keep `Account` a client component: server-side `<Show>` makes every page dynamic.
   While Clerk loads, `Account` shows skeletons shaped by the `__client_uat` cookie (signed in or
   not), and a placeholder circle sits under the avatar until Clerk's UserButton paints over it.
+- Legal: `/terms` and `/privacy` (`src/components/LegalPage.tsx`), linked from the footer, sign-up
+  (a footnote) and the Pro card. Who runs Quairy (`OPERATOR`) and the "last updated" dates live in
+  `src/lib/legal.ts`; keep the pages true to what the code stores and who processes it (Vercel,
+  Clerk, Stripe, Upstash, TypeSafe), and update the date when they change in substance. Checkout
+  requires ticking the terms (`consent_collection`, which needs the terms URL saved in Stripe's
+  public details; without it `createCheckout` falls back to no checkbox) and states the auto-renewal
+  and 14-day withdrawal. The Clerk webhook (`/api/clerk/webhook`, needs
+  `CLERK_WEBHOOK_SIGNING_SECRET`, event `user.deleted`) deletes a deleted user's Redis data
+  (`forgetUser`, `forgetCustomer`) and stops their subscription renewing; add any new per-user
+  Redis key to `forgetUser`.
 - Integrations are provisioned through the Vercel Marketplace (Clerk, Stripe, Upstash); env vars
   come from `vercel env pull`. Production Clerk needs DNS records for the domain.
 

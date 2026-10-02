@@ -59,7 +59,14 @@ export default async function ProPage() {
                 </Link>
               </Button>
             )}
-            <p className="text-center text-xs text-muted-foreground">Paid securely with Stripe.</p>
+            <p className="text-center text-xs text-muted-foreground">
+              Renews automatically until you cancel. Paid securely with Stripe. By subscribing you
+              agree to the{" "}
+              <Link href="/terms" className="underline underline-offset-4">
+                terms
+              </Link>
+              .
+            </p>
           </>
         )
       }

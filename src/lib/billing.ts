@@ -106,7 +106,7 @@ export async function createCheckout({
     getOrCreateCustomer(userId, email),
     getProPrice(interval),
   ]);
-  const session = await getStripe().checkout.sessions.create({
+  const params: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
     customer,
     client_reference_id: userId,
@@ -115,8 +115,37 @@ export async function createCheckout({
     allow_promotion_codes: true,
     success_url: `${origin}/pro/welcome?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/pro`,
-  });
-  return session.url!;
+    // Consumers have 14 days to withdraw; asking for Pro to start now means a
+    // withdrawal refunds only the unused days.
+    custom_text: {
+      submit: {
+        message: `Pro starts right away and renews every ${interval} until you cancel. If you withdraw within 14 days, you're refunded for the days you didn't use.`,
+      },
+    },
+  };
+  const stripe = getStripe();
+  try {
+    const session = await stripe.checkout.sessions.create({
+      ...params,
+      consent_collection: { terms_of_service: "required" },
+      custom_text: {
+        ...params.custom_text,
+        terms_of_service_acceptance: {
+          message: `I agree to the [Terms of service](${origin}/terms) and have read the [Privacy policy](${origin}/privacy).`,
+        },
+      },
+    });
+    return session.url!;
+  } catch (error) {
+    // Stripe only collects consent once a terms URL is saved in the Dashboard
+    // (Settings › Public details). Until then, check out without the checkbox.
+    if (!(error instanceof Stripe.errors.StripeInvalidRequestError) || !/terms of service/i.test(error.message)) {
+      throw error;
+    }
+    console.warn("Stripe has no terms of service URL; checking out without the consent checkbox");
+    const session = await stripe.checkout.sessions.create(params);
+    return session.url!;
+  }
 }
 
 /**
@@ -281,4 +310,19 @@ export async function createCardUpdate({ userId, returnUrl }: { userId: string; 
     },
   });
   return session.url;
+}
+
+/**
+ * For a deleted account: stops any subscription from renewing and forgets
+ * which Stripe customer the user was. Stripe keeps its own records, which
+ * accounting law requires.
+ */
+export async function forgetCustomer(userId: string) {
+  const found = await getStripeSubscription(userId);
+  if (found && ["active", "trialing", "past_due"].includes(found.subscription.status)) {
+    await getStripe().subscriptions.update(found.subscription.id, { cancel_at_period_end: true });
+  }
+  const customerId = found?.customerId ?? (await getCustomerId(userId));
+  const redis = getRedis();
+  await redis.del(customerKey(userId), subscriptionKey(userId), ...(customerId ? [userKey(customerId)] : []));
 }

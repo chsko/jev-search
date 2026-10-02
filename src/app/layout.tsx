@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/ui/themes";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
@@ -59,12 +60,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <footer className="flex flex-col" style={{ viewTransitionName: "site-footer" }}>
           <Separator />
-          <p className="px-4 py-4 text-center text-xs text-muted-foreground">
-            Answers powered by Jev, a System One model from{" "}
-            <a href="https://typesafe.ai" className="underline-offset-4 hover:underline">
-              TypeSafe
-            </a>
-          </p>
+          <div className="flex flex-col items-center gap-1.5 px-4 py-4 text-center text-xs text-muted-foreground">
+            <p>
+              Answers powered by Jev, a System One model from{" "}
+              <a href="https://typesafe.ai" className="underline-offset-4 hover:underline">
+                TypeSafe
+              </a>
+            </p>
+            <nav aria-label="Legal" className="flex gap-3">
+              <Link href="/terms" className="underline-offset-4 hover:underline">
+                Terms
+              </Link>
+              <Link href="/privacy" className="underline-offset-4 hover:underline">
+                Privacy
+              </Link>
+            </nav>
+          </div>
         </footer>
         <Analytics />
         {/* Real-user Core Web Vitals, reported to Vercel Speed Insights. */}

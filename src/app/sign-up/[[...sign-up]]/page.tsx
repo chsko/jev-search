@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 import { AuthPage } from "@/components/AuthPage";
 
@@ -12,7 +13,23 @@ export function generateStaticParams() {
 // Quairy's own sign-up page, in the Quarry theme, instead of Clerk's hosted one.
 export default function SignUpPage() {
   return (
-    <AuthPage label="Loading sign up…" prefetch="/sign-in">
+    <AuthPage
+      label="Loading sign up…"
+      prefetch="/sign-in"
+      footnote={
+        <>
+          By creating an account you agree to the{" "}
+          <Link href="/terms" className="underline underline-offset-4">
+            terms of service
+          </Link>{" "}
+          and confirm you’ve read the{" "}
+          <Link href="/privacy" className="underline underline-offset-4">
+            privacy policy
+          </Link>
+          .
+        </>
+      }
+    >
       <SignUp />
     </AuthPage>
   );

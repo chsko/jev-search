@@ -28,20 +28,26 @@ function CardSkeleton({ label }: { label: string }) {
 export function AuthPage({
   label,
   prefetch,
+  footnote,
   children,
 }: {
   label: string;
   prefetch?: string;
+  /** A line under the card, such as the terms people agree to. */
+  footnote?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
     <>
       <SiteHeader />
-      <main id="main" className="flex flex-1 justify-center px-4 py-12">
+      <main id="main" className="flex flex-1 flex-col items-center gap-4 px-4 py-12">
         <div className="auth-slot grid w-full justify-items-center">
           <CardSkeleton label={label} />
           <div className="col-start-1 row-start-1">{children}</div>
         </div>
+        {footnote && (
+          <p className="max-w-100 text-center text-xs text-muted-foreground">{footnote}</p>
+        )}
       </main>
       {prefetch && <PrefetchRoutes routes={[prefetch]} />}
     </>
