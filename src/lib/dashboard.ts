@@ -1,5 +1,5 @@
 import "server-only";
-import { clerkClient, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { getStripe } from "./billing";
 import { PRO_MONTHLY_EUR, PRO_YEARLY_EUR } from "./pricing";
 
@@ -7,17 +7,23 @@ import { PRO_MONTHLY_EUR, PRO_YEARLY_EUR } from "./pricing";
 // Vercel Web Analytics (visitors), Clerk (sign-ups) and Stripe (subscriptions).
 // Quairy's own search counts come from `getDailyCounts` in stats.ts.
 
-/** Whether the signed-in user may see the dashboard: a verified email in ADMIN_EMAILS. */
+/** Roles given in Clerk, as `{"role": "admin"}` in a user's public metadata. */
+export type Role = "admin";
+
+/**
+ * Whether the signed-in user may see the dashboard: their Clerk public
+ * metadata says `role: "admin"`. Only the Clerk dashboard or the secret key
+ * can set public metadata, so users can't grant it to themselves. Read from
+ * the session token when it carries the metadata (Clerk › Sessions ›
+ * Customize session token: `{"metadata": "{{user.public_metadata}}"}`), else
+ * from the user.
+ */
 export async function isAdmin() {
-  const allowed = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (allowed.length === 0) return false;
-  const user = await currentUser();
-  return !!user?.emailAddresses.some(
-    (e) => e.verification?.status === "verified" && allowed.includes(e.emailAddress.toLowerCase()),
-  );
+  const { userId, sessionClaims } = await auth();
+  if (!userId) return false;
+  const role =
+    sessionClaims?.metadata?.role ?? (await currentUser())?.publicMetadata?.role;
+  return role === "admin";
 }
 
 /** The UTC days from `days - 1` days ago through today, as YYYY-MM-DD. */

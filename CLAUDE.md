@@ -117,7 +117,8 @@ docs at https://docs.typesafe.ai/llms.txt before writing integration code.
   `user.created`), `Subscribe`, `Cancel`, `Resume`, `Subscription ended` (from changes seen in
   `syncSubscription`). Redis keeps daily counts (`stats:<day>`: searches, proSearches, botPreviews)
   and a HyperLogLog of anonymous searcher ids (`stats:searchers:<day>`), 120 days. The owner's
-  dashboard `/admin` (404 unless a verified email is in `ADMIN_EMAILS`, checked in the layout)
+  dashboard `/admin` (404 unless the user's Clerk public metadata has `role: "admin"`, set in the
+  Clerk dashboard; `isAdmin` checked in the layout, typed in `src/types/globals.d.ts`)
   combines them with Vercel's Web Analytics API (`VERCEL_ANALYTICS_TOKEN`), Clerk sign-ups and
   Stripe subscriptions (`src/lib/dashboard.ts`).
 - Integrations are provisioned through the Vercel Marketplace (Clerk, Stripe, Upstash); env vars

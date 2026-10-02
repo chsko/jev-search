@@ -76,7 +76,7 @@ function Funnel({ steps }: { steps: { label: string; value: number | null; note?
 
 /**
  * The owner's dashboard: visitors to subscribers in one funnel, plus daily
- * numbers. Only for emails in ADMIN_EMAILS (checked in the layout).
+ * numbers. Only for users whose Clerk role is "admin" (checked in the layout).
  */
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   // The layout has already checked that this is an admin.
